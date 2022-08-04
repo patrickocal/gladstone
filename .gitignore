@@ -1,0 +1,9 @@
+# ignore all logs
+**.DS_Store
+**.log
+**.blg
+**.aux
+**.swp
+**pratenddefaultcategory*
+overleaf/
+**.tar
