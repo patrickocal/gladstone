@@ -36,27 +36,47 @@ from20To4 = Dict(
 #IOIG to 20 Sector
 IOSource = ExcelReaders.readxlsheet("data"*pathmark*"5209055001DO001_201819.xls", "Table 8");
 IOIG = IOSource[4:117, 1];
-ANZSICDiv = ["Agriculture,
-             forestry and fishing",
+ANZSICDiv = ["Agriculture, Forestry and Fishing",
              "Mining",
              "Manufacturing",
-             "Electricity, gas, water and waste services",
+             "Electricity, Gas, Water and Waste Services",
              "Construction",
-             "Wholesale trade",
-             "Retail trade",
-             "Accomodation and food services",
-             "Transport, postal and warehousing",
-             "Information media and telecommunications",
-             "Financial and insurance services",
-             "Rental, hiring and real estate services",
-             "Professional, scientific and technical services",
-             "Administrative and support services",
-             "Public administration and safety",
-             "Education and training",
-             "Health care and social assistance",
-             "Arts and recreation services",
-             "Other services",
+             "Wholesale Trade",
+             "Retail Trade",
+             "Accomodation and Food Services",
+             "Transport, Postal and Warehousing",
+             "Information Media and Telecommunications",
+             "Financial and Insurance Services",
+             "Rental, Hiring and Real Estate Services",
+             "Professional, Scientific and Technical Services",
+             "Administrative and Support Services",
+             "Public Administration and Safety",
+             "Education and Training",
+             "Health Care and Social Assistance",
+             "Arts and Recreation Services",
+             "Other Services",
              "Ownership of Dwellings",
+            ];
+ANZdiv = ["Agriculture, Forestry & Fishing",
+                "Mining",
+                "Manufacturing",
+                "Electricity, Gas, Water & Waste Services",
+                "Construction",
+                "Wholesale Trade",
+                "Retail Trade",
+                "Accommodation & Food Services",
+                "Transport, Postal & Warehousing",
+                "Information Media & Telecommunications",
+                "Financial & Insurance Services",
+                "Rental, Hiring & Real Estate Services",
+                "Professional, Scientific & Technical Services",
+                "Administrative & Support Services",
+                "Public Administration & Safety",
+                "Education & Training",
+                "Health Care & Social Assistance",
+                "Arts & Recreation Services",
+                "Other Services",
+                "Ownership of Dwellings",
             ];
 ANZSICDivShort = ["AgrForestFish", "Mining", "Manufacturing", "Utilities",
                   "Construction", "Wholesale", "Retail", "AccomFoodServ",
@@ -64,11 +84,11 @@ ANZSICDivShort = ["AgrForestFish", "Mining", "Manufacturing", "Utilities",
                   "RealEstate", "BusinessServ", "Admin", "PublicAdminSafe",
                   "Education", "Health&Social", "Arts&Rec", "OtherServices",
                   "Dwellings"];
-ANZSICDivByLetter =["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O",
+ANZcode =["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O",
                     "P","Q","R","S", "T"];
 from20ToInd = Dict{String, Int64}();
-for i in eachindex(ANZSICDivByLetter);
-    from20ToInd[ANZSICDivByLetter[i]] = Int(i);
+for i in eachindex(ANZcode);
+    from20ToInd[ANZcode[i]] = Int(i);
 end
 
 function mapioig20(ioigcol)
