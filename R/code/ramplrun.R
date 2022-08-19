@@ -3,29 +3,34 @@ library(rAMPL)
 # Create an AMPL instance
 ampl <- new(AMPL)
 
-dataToParameter <- function(param_name){
-  default <- ampl$getParameter(param_name)
-  default_val_df <- default$getValues()
-  nrows <- nrow(default_val_df)
-  
-  importedData <- read.csv(file = paste(param_name,".csv", sep = ""))
-  importedData[importedData<0] <- 0
-  mdat <- matrix(t(as.matrix(importedData[,-1])), nrow = nrows, ncol = 1, 
-                 byrow = TRUE)
-  
-  default_val_df[, param_name] <- mdat
-  default$setValues(default_val_df)
+# path to model file.
+modeldir <- "../ampl/code/"
+# Read the model file.
+ampl$read(paste(modeldir, "maiwar.mod", sep=""))
+# path to data
+setparval <- function(param_name, datadir="../julia/data/"){
+  amplparentity <- ampl$getParameter(param_name)
+  parvaldf <- amplparentity$getValues()
+  numrow <- nrow(parvaldf)
+  newdatadf <- read.csv(file = paste(param_name, ".csv", sep=""))
+  newdatadf[newdatadf<0] <- 0
+  newdatacol <- matrix(t(as.matrix(newdatadf[,-1])),
+                       nrow=numrow, ncol=1,
+                       byrow=TRUE)
+  parvaldf[, param_name] <- newdatacol
+  amplparentity$setValues(parvaldf)
 }
 
-dataToParameter("RAW_INV_FLW")
-
+setparval("RAW_INV_FLW")
+stop
+ampl$solve()
+# Print out the result
+cat(sprintf("Objective: %f\n", ampl$getObjective("pres_disc_val")$value()))
 # Set solver, otherwise will default to knitro
 #ampl$setOption("solver", solver)
 
-# Read the model file.
-ampl$read("maiwar.mod")
 
-phi <- ampl$getSet("Sectors")
+#phi <- ampl$getSet("Sectors")
 
 #sectorNames <- phi$getValues()
 
@@ -33,56 +38,54 @@ phi <- ampl$getSet("Sectors")
 
 #phi$setValues(sectorNames)
 
-phi$getValues()
+#phi$getValues()
 
-raw_inv_flw <- ampl$getParameter("RAW_INV_FLW")
+#raw_inv_flw <- ampl$getParameter("RAW_INV_FLW")
 
-raw_inv_flw_val <- raw_inv_flw$getValues()
+#raw_inv_flw_val <- raw_inv_flw$getValues()
 
-raw_con_flw <- ampl$getParameter("RAW_CON_FLW")
+#raw_con_flw <- ampl$getParameter("RAW_CON_FLW")
 
-raw_con_flw_val <- raw_con_flw$getValues()
+#raw_con_flw_val <- raw_con_flw$getValues()
 
 #raw_inv_flw_val[raw_inv_flw_val=="dI"] <- "I"
 
-data_frame <- raw_inv_flw_val
+#data_frame <- raw_inv_flw_val
 
-df <-data_frame[order(data_frame$index0, data_frame$index1, data_frame$index2),]
+#df <-data_frame[order(data_frame$index0, data_frame$index1, data_frame$index2),]
 
-flowsData <- read.csv(file = "capitalFlowsRAS.csv")
+#flowsData <- read.csv(file = "capitalFlowsRAS.csv")
 
-flowsData[flowsData<0] <- 0
+#flowsData[flowsData<0] <- 0
 
-mdat <- matrix(t(as.matrix(flowsData[,2:21])), nrow = 400, ncol = 1, byrow = 
-                 TRUE)
+#mdat <- matrix(t(as.matrix(flowsData[,2:21])), nrow=400, ncol=1, byrow=TRUE)
 
-raw_inv_flw_val$RAW_INV_FLW <- mdat
+#raw_inv_flw_val$RAW_INV_FLW <- mdat
 
-raw_inv_flw$setValues(raw_inv_flw_val)
+#raw_inv_flw$setValues(raw_inv_flw_val)
 
-raw_inv_flw$getValues()
+#raw_inv_flw$getValues()
 
 #cost$setValues(data.frame(indices, values))
 
 # Just to test that a basic solve as is works:
-ampl$solve()
 
 # Read in a .csv file of data. note that ideally in making this data we want 
 # each parameter set to be in one column, of length of the set it runs over, for 
 # instance PHI_ADJ would be one column in the csv, of length numSec
-sampleData <- read.csv(file = "sampleData.csv", header=FALSE)
+#sampleData <- read.csv(file = "sampleData.csv", header=FALSE)
 
 # Pick out single parameter set
-paramData1 <- sampleData$V1
+#paramData1 <- sampleData$V1
 
 # Set sectors (below is just an example, obviously does not have all the 
 # sectors we will be using)
-sectorNames <- c("A", "B", "C", "D", "E", "F", "G", "H")
+#sectorNames <- c("A", "B", "C", "D", "E", "F", "G", "H")
 
 # Set the values for the set Sectors, and for the parameter PHI_ADJ
 # For each parameter you set, you want to include the set that it is indexed 
 # over, as below
-ampl$setData(data.frame(Sectors=sectorNames, PHI_ADJ=paramData1), 1, "Sectors")
+#ampl$setData(data.frame(Sectors=sectorNames, PHI_ADJ=paramData1), 1, "Sectors")
 
 # I'm leaving this in from dietmodel.R in the examples but commented out, 
 # as its a good example of how to import a set indexed over multiple sets
@@ -109,10 +112,8 @@ ampl$setData(data.frame(Sectors=sectorNames, PHI_ADJ=paramData1), 1, "Sectors")
 # ampl$setData(df, 2, "")
 
 # Solve the model
-ampl$solve()
+#ampl$solve()
 
-# Print out the result
-cat(sprintf("Objective: %f\n", ampl$getObjective("pres_disc_val")$value()))
 
 
 # Example of how to retreive variables, retained from dietmodel.R 
