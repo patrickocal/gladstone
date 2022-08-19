@@ -320,7 +320,7 @@ function makerr(table)
 end 
 anztable8rr = makerr(anztable8)
 anztable5rr = makerr(anztable5)
-
+anztablediffrr = makerr(anztablediff)
 # import regional data from remplan directory
 # what region?
 region = "glad"
@@ -452,7 +452,6 @@ println(sum(labpersec[:, 3]) - sum(outpersec[:, 3]));
 RAS
 ==============================================================================#
 
-# instantiate an optimisation problem
 numrow = size(anztable8rr, 1) - 1;
 Q7col = columnindex(anztable8rr, "Q7");
 Acol = columnindex(anztable8rr, "A");
@@ -463,7 +462,7 @@ newrowtot = labpersec[1:numcol, 2];
 newcoltot = outpersec[1:numrow, 2];
 
 # which table are we RASing? 5, 8 or diff?
-tn = "5";
+tn = "8";
 # make sure we have a valid table and, if so, set it
 (tn in ["5", "8", "diff"]
  ? (println("Table ", tn, " coming up.");
@@ -480,14 +479,14 @@ for i in range(1, numrow)
   for j in range(1, numcol)
     tabledf[i, j] = (tabledf[i, j] != 0
                    && (tabledf[i, j]
-                       * newrowtot[j] / tablerr[end, 1 + j]
+                       * newrowtot[j] / sum(tabledf[:, j])
                       ) 
                   );
   end;
 end;
-stop
 table = Matrix(tabledf)
 tol = 1e-0;
+# instantiate an optimisation problem
 ras = Model(Ipopt.Optimizer);
 # Should be equal dimensions
 @variable(ras, x[1:numrow, 1:numcol]);
@@ -499,7 +498,7 @@ eps = 50e-2;
 for i in range(1, numrow)
   for j in range(1, numcol)
     shr[i, j] = (1 / count(!iszero, table[:, j])
-                 * ((rand(MersenneTwister(i + j)) - 50e-2) * 10e-2 + 1) 
+                 * ((rand(MersenneTwister(i + j)) - 50e-2) * 000e-2 + 1) 
                 ) ^ (- 1 / eps);
   end
 end
@@ -532,7 +531,8 @@ end;
 for i in range(1, numrow)
   for j in range(1, numcol)
     table[i, j] == 0 && @constraint(ras, x[i, j] == 0);
-    table[i, j] > 0 && @constraint(ras, x[i, j] >= tol);
+    (((tn in ["5", "8"]) & (table[i, j] > 0))
+     && @constraint(ras, x[i, j] >= tol));
   end
 end;
 #@constraint(ras, x[end, end] <= anztable8rr[end-1, end-1] * aggoutlq);
@@ -554,7 +554,7 @@ insertcols!(sol, 1, :ANZdiv => anztable8rr[1:numrow, 1]);
 println("and the new table is:")
 print(sol)
 # Export tables as CSV
-CSV.write("data"*pathmark*"newtable.csv", sol);
+CSV.write("data"*pathmark*"newtable"*tn*".csv", sol);
 
 stop
 #==============================================================================
