@@ -6,26 +6,43 @@ ampl <- new(AMPL)
 # path to model file.
 modeldir <- "../ampl/code/"
 # Read the model file.
-ampl$read(paste(modeldir, "maiwar.mod", sep=""))
+ampl$read(paste(modeldir, "gladmodel.mod", sep=""))
 # path to data
-setparval <- function(param_name, datadir="../julia/data/"){
-  amplparentity <- ampl$getParameter(param_name)
-  parvaldf <- amplparentity$getValues()
-  numrow <- nrow(parvaldf)
-  newdatadf <- read.csv(file = paste(param_name, ".csv", sep=""))
+setparval <- function(parname, datadir="../julia/output/"){
+#parname = "RAW_INV_FLW"
+  amplparentity <- ampl$getParameter(parname);
+  parvalmlls <- amplparentity$getInstances();
+  numrow = length(parvalmlls);
+  numcol = length(parvalmlls[[1]]);
+  nom = rep("index", numcol);
+  for (i in 1:1:numcol-1){
+    nom[i] = paste(nom[i], as.character(i-1), sep="")
+  };
+  nom[numcol] = parname;
+  df = data.frame(matrix(NA, nrow=numrow, ncol=numcol))
+  for (j in 1:1:numcol){
+    for (i in 1:1:numrow) {df[i,j] = parvalmlls[[i]][[j]][1]}
+  }
+  colnames(df) = nom
+  newdatadf <- read.csv(file = paste(datadir, parname, ".csv", sep=""))
   newdatadf[newdatadf<0] <- 0
   newdatacol <- matrix(t(as.matrix(newdatadf[,-1])),
                        nrow=numrow, ncol=1,
                        byrow=TRUE)
-  parvaldf[, param_name] <- newdatacol
-  amplparentity$setValues(parvaldf)
+  df[, parname] <- newdatacol
+  amplparentity$setValues(df)
+  return
 }
-
 setparval("RAW_INV_FLW")
 stop
-ampl$solve()
+setparval("RAW_MED_FLW")
+setparval("RAW_MED_FLW")
+setparval("RAW_MED_FLW")
+setparval("RAW_MED_FLW")
+
+#ampl$solve()
 # Print out the result
-cat(sprintf("Objective: %f\n", ampl$getObjective("pres_disc_val")$value()))
+#cat(sprintf("Objective: %f\n", ampl$getObjective("pres_disc_val")$value()))
 # Set solver, otherwise will default to knitro
 #ampl$setOption("solver", solver)
 

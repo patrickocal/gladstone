@@ -365,8 +365,8 @@ Armington variables
 #-----------domestic prices
 var prc_dom_CDL 'domestic price: Cobb-Douglas in sectors Leontief in imports'
   {j in Sectors, t in LookForward}
-  = SCALE_CON * SHR_CON['SEQ', j] * (A_CCON / SHR_CON_CCON['SEQ', j])
-    * (A_CON * ccon_sec_CD['SEQ', t] / dcon['SEQ', j, t]);
+  = SCALE_CON * SHR_CON['GLD', j] * (A_CCON / SHR_CON_CCON['GLD', j])
+    * (A_CON * ccon_sec_CD['GLD', t] / dcon['GLD', j, t]);
 var prc_dom  'domestic price / the Lagrange multiplier'
   {j in Sectors, t in LookForward}
   = prc_dom_CDL[j, t];
@@ -715,63 +715,63 @@ The_data section
 =============================================================================*/
 data;
 #-----------1x20 model
-set Regions := SEQ;
-set Sectors := A B C D E F G H I J K L M N PbSc P Q R T U;
+set Regions := GLD;
+set Sectors := A B C D E F G H Is J K L M N O P Q R S T;
 #set Sectors := Agrc Frst;
 #-----------2x2 model
-#set Regions := SEQ RoQ;
+#set Regions := GLD RoQ;
 #set Sectors := Agrc Frst;
 #-----------2x3 model
-#set Regions := SEQ RoQ;
-#set Sectors := A Mnfc PbSc;
+#set Regions := GLD RoQ;
+#set Sectors := A Mnfc O;
 #-----------2x4 model
-#set Regions := SEQ RoQ;
-#set Sectors := A Frst Mnfc PbSc;
+#set Regions := GLD RoQ;
+#set Sectors := A Frst Mnfc O;
 #-----------3x4 model
-#set Regions := SEQ RoQ RoA;
+#set Regions := GLD RoQ RoA;
 #set Sectors := Agrc Frst Mnfc Srvc;
 #-----------3x5 model
-#set Regions := SEQ RoQ RoA;
-#set Sectors := A Frst Mnfc Srvc PbSc;
+#set Regions := GLD RoQ RoA;
+#set Sectors := A Frst Mnfc Srvc O;
 #-----------3x6 model
-#set Regions := SEQ RoQ RoA;
-#set Sectors := A Frst Mnfc Srvc PbSc Utlt;
+#set Regions := GLD RoQ RoA;
+#set Sectors := A Frst Mnfc Srvc O Utlt;
 ##-----------4x4
-#set Regions := SEQ RoQ RoA RoW;
-#set Sectors := A Frst Mnfc PbSc;# Trns Utlt;
+#set Regions := GLD RoQ RoA RoW;
+#set Sectors := A Frst Mnfc O;# Trns Utlt;
 ##-----------4x5
-#set Regions := SEQ RoQ RoA RoW;
-#set Sectors := A Frst Mnfc PbSc Utlt;
+#set Regions := GLD RoQ RoA RoW;
+#set Sectors := A Frst Mnfc O Utlt;
 ##-----------4x6
-#set Regions := SEQ RoQ RoA RoW;
-#set Sectors := A Elct Frst Mnfc Srvc PbSc Utlt;
+#set Regions := GLD RoQ RoA RoW;
+#set Sectors := A Elct Frst Mnfc Srvc O Utlt;
 ##-----------4x7
-#set Regions := SEQ RoQ RoA RoW;
-#set Sectors := A B C D E F PbSc;
+#set Regions := GLD RoQ RoA RoW;
+#set Sectors := A B C D E F O;
 ##-----------4x8
-#set Regions := SEQ RoQ RoA RoW;
-#set Sectors := A B C D E F G PbSc;
+#set Regions := GLD RoQ RoA RoW;
+#set Sectors := A B C D E F G O;
 ##-----------4x10
-#set Regions := SEQ RoQ RoA RoW;
-#set Sectors := A B C D E F G H I PbSc;
+#set Regions := GLD RoQ RoA RoW;
+#set Sectors := A B C D E F G H I O;
 #-----------7x18
-#set Regions := CnQ FNQ Mck NrQ SEQ WBB RoA;
-#set Sectors := A B C D E F G H I J K L M N PbSc P Q R;
+#set Regions := CnQ FNQ Mck NrQ GLD WBB RoA;
+#set Sectors := A B C D E F G H I J K L M N O P Q R;
 #-----------7x20
-#set Regions := CnQ FNQ Mck NrQ SEQ WBB RoA;
-#set Sectors := A B C D E F G H I J K L M N PbSc P Q R T U;
+#set Regions := CnQ FNQ Mck NrQ GLD WBB RoA;
+#set Sectors := A B C D E F G H I J K L M N O P Q R T U;
 #-----------7x21
-#set Regions := CnQ FNQ Mck NrQ SEQ WBB RoA;
-#set Sectors := A B C D E F G H I J K L M N PbSc P Q R T U Al;
+#set Regions := CnQ FNQ Mck NrQ GLD WBB RoA;
+#set Sectors := A B C D E F G H I J K L M N O P Q R T U Al;
 ##-----------7x40
-#set Regions := CnQ FNQ Mck NrQ SEQ WBB RoA;
-#set Sectors := A B C D E F G H I J K L M N PbSc P Q R T U
-#  A1 B1 C1 D1 E1 F1 G1 H1 I1 J1 K1 L1 M1 N1 PbSc1 P1 Q1 R1 T1 U1;
+#set Regions := CnQ FNQ Mck NrQ GLD WBB RoA;
+#set Sectors := A B C D E F G H I J K L M N O P Q R T U
+#  A1 B1 C1 D1 E1 F1 G1 H1 I1 J1 K1 L1 M1 N1 O1 P1 Q1 R1 T1 U1;
 ##-----------7x60
-#set Regions := CnQ FNQ Mck NrQ SEQ WBB RoA;
-#set Sectors := A B C D E F G H I J K L M N PbSc P Q R T U
-#  A1 B1 C1 D1 E1 F1 G1 H1 I1 J1 K1 L1 M1 N1 PbSc1 P1 Q1 R1 T1 U1
-#  A2 B2 C2 D2 E2 F2 G2 H2 I2 J2 K2 L2 M2 N2 PbSc2 P2 Q2 R2 T2 U2;
+#set Regions := CnQ FNQ Mck NrQ GLD WBB RoA;
+#set Sectors := A B C D E F G H I J K L M N O P Q R T U
+#  A1 B1 C1 D1 E1 F1 G1 H1 I1 J1 K1 L1 M1 N1 O1 P1 Q1 R1 T1 U1
+#  A2 B2 C2 D2 E2 F2 G2 H2 I2 J2 K2 L2 M2 N2 O2 P2 Q2 R2 T2 U2;
 /*-----------------------------------------------------------------------------
 #-----------set the horizon and length of paths
 -----------------------------------------------------------------------------*/
