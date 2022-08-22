@@ -90,36 +90,46 @@ param LabSup 'supremum of interval for labour values' default 66e-2;
 /*=============================================================================
 #-----------raw flow data parameters
 =============================================================================*/
-param RAW_CON_FLW "raw consumption flows: table8"
-  {Regions, Sectors} default Uniform(UInf, USup) >= 0;
-param RAW_LAB_FLW  "raw consumption flows: table8"
-  {Regions, Sectors} default Uniform(UInf, USup) >= 0;
-param RAW_INV_FLW "raw investment flows: tablekapflw"
+param RAW_CON "raw consumption flows: table8"
+  {Regions, Sectors}
+  default Uniform(UInf, USup) >= 0;
+param RAW_INV "raw investment flows: tablekapflw"
   {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
-param RAW_MED_FLW "raw intermediate flows: table8"
+param RAW_LAB  "raw consumption flows: table8"
+  {Regions, Sectors}
+  default Uniform(UInf, USup) >= 0;
+param RAW_MED "raw intermediate flows: table8"
   {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
 #-----------raw Armington data
 param RAW_DOM_CCON 'raw domestic flows to consumption: table5'
   {Regions, Sectors}
-  default Uniform(UInf, USup);
+  default Uniform(UInf, USup) >= 0;
 param RAW_YSA_CCON 'raw import flows to consumption: table(8-5)'
   {r in Regions, i in Sectors}
-  default Uniform(UInf, USup);
+  default Uniform(UInf, USup) >= 0;
 param RAW_DOM_CINV 'raw domestic flows to investment: table5'
   {r in Regions, i in Sectors, j in Sectors}
-  default Uniform(UInf, USup);
+  default Uniform(UInf, USup) >= 0;
 param RAW_YSA_CINV 'raw import flows to investment: table(8-5)'
   {r in Regions, i in Sectors, j in Sectors}
-  default Uniform(UInf, USup);
+  default Uniform(UInf, USup) >= 0;
 param RAW_DOM_CMED 'raw domestic flows to intermediates: table5'
   {r in Regions, i in Sectors, j in Sectors}
-  default Uniform(UInf, USup);
+  default Uniform(UInf, USup) >= 0;
 param RAW_YSA_CMED 'raw import flows to intermediates: table(8-5)'
   {r in Regions, i in Sectors, j in Sectors}
-  default Uniform(UInf, USup);
+  default Uniform(UInf, USup) >= 0;
+param RAW_EXO_JOUT 'raw export data: table8'
+  {Regions, Sectors}
+  default Uniform(UInf, USup) * 10e-2;
+param RAW_DOM_JOUT 'raw total domestic uses: table8'
+  {Regions, Sectors}
+  default Uniform(UInf, USup) * 90e-2;
+/*=============================================================================
 #-----------parameters for storing (observable) path values
+=============================================================================*/
 param CON 'observed consumption' {Regions, Sectors, PathTimes}
   default 1e+0; # in (OInf, OSup);
 param INV_SEC 'observed investment' {Regions, Sectors, PathTimes}
@@ -422,8 +432,8 @@ var cinv 'composite investment flows'
   ) ** (RHO_CINV_HAT[r, i, j] * SCALE_CINV);
 #-----------exports (other variables appear after output)
 param SHR_EXO_JOUT 'share of exports in output (joint production CET function)'
-  {Regions, Sectors}
-  default 010e-2;
+  {r in Regions, i in Sectors}
+  = RAW_EXO_JOUT[r, i] / (RAW_DOM_JOUT[r, i] + RAW_EXO_JOUT[r, i];
 param SHR_DOM_JOUT 'share of domestic uses in output (CET function)'
   {r in Regions, i in Sectors}
   = 1 - SHR_EXO_JOUT[r, i];
