@@ -87,13 +87,38 @@ param VSup 'supremum of interval for basic variables' default 1e+5;
 param OInf 'infimum of interval for observed/actual values' default 1e-7;
 param OSup 'supremum of interval for observed/actual values' default 1e+7;
 param LabSup 'supremum of interval for labour values' default 66e-2;
-#-----------raw flow parameters (these would be replaced with normalised data)
-param RAW_CON_FLW {Regions, Sectors} default Uniform(UInf, USup) >= 0;
-param RAW_LAB_FLW {Regions, Sectors} default Uniform(UInf, USup) >= 0;
-param RAW_INV_FLW {Regions, Sectors, Sectors} 
+/*=============================================================================
+#-----------raw flow data parameters
+=============================================================================*/
+param RAW_CON_FLW "raw consumption flows: table8"
+  {Regions, Sectors} default Uniform(UInf, USup) >= 0;
+param RAW_LAB_FLW  "raw consumption flows: table8"
+  {Regions, Sectors} default Uniform(UInf, USup) >= 0;
+param RAW_INV_FLW "raw investment flows: tablekapflw"
+  {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
-param RAW_MED_FLW {Regions, Sectors, Sectors} 
+param RAW_MED_FLW "raw intermediate flows: table8"
+  {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
+#-----------raw Armington data
+param RAW_DOM_CCON 'raw domestic flows to consumption: table5'
+  {Regions, Sectors}
+  default Uniform(UInf, USup);
+param RAW_YSA_CCON 'raw import flows to consumption: table(8-5)'
+  {r in Regions, i in Sectors}
+  default Uniform(UInf, USup);
+param RAW_DOM_CINV 'raw domestic flows to investment: table5'
+  {r in Regions, i in Sectors, j in Sectors}
+  default Uniform(UInf, USup);
+param RAW_YSA_CINV 'raw import flows to investment: table(8-5)'
+  {r in Regions, i in Sectors, j in Sectors}
+  default Uniform(UInf, USup);
+param RAW_DOM_CMED 'raw domestic flows to intermediates: table5'
+  {r in Regions, i in Sectors, j in Sectors}
+  default Uniform(UInf, USup);
+param RAW_YSA_CMED 'raw import flows to intermediates: table(8-5)'
+  {r in Regions, i in Sectors, j in Sectors}
+  default Uniform(UInf, USup);
 #-----------parameters for storing (observable) path values
 param CON 'observed consumption' {Regions, Sectors, PathTimes}
   default 1e+0; # in (OInf, OSup);
@@ -234,7 +259,7 @@ param E_shk 'expected shock (exogenous)'
   {r in Regions, i in Sectors, t in LookForward}
     = ZETA2 + Pr_shk[r, i, t] * (ZETA1 - ZETA2);
 /*-----------------------------------------------------------------------------
-Armington parameters
+Computed Armington parameters
 -----------------------------------------------------------------------------*/
 #-----------foreign prices
 param PRC_YSA 'import prices' {Sectors, LookForward} default 100e-2;
@@ -272,21 +297,23 @@ param RHO_CMED_HAT 'inverse of CES exponent for composite intermediates'
   {r in Regions, i in Sectors, j in Sectors}
   = 1 / RHO_CMED[r, i, j];
 #-----------share parameters
-param SHR_CON_CCON 'share of domestic consumption in comp. consumption'
-  {Regions, Sectors}
-  default 50e-2;
-param SHR_YSA_CMED 'import weight in composite intermediate flows'
+param SHR_DOM_CCON 'domestic share in comp. consumption'
+  {r in Regions, i in Sectors}
+  = RAW_DOM_CCON[r, i] / (RAW_DOM_CCON[r, i] + RAW_YSA_CCON[r, i]);
+param SHR_DOM_CCON 'domestic share in comp. consumption'
+  {r in Regions, i in Sectors}
+  = 1 - SHR_DOM_CCON[r, i];
+param SHR_DOM_CINV 'domestic share in composite investment flows'
   {r in Regions, i in Sectors, j in Sectors}
-  default 50e-2;
-param SHR_DOM_CMED 'import weight in composite intermediate flows'
+  = RAW_DOM_CINV[r, i, j] / (RAW_DOM_CINV[r, i, j] + RAW_YSA_CINV[r, i, j]);
+param SHR_YSA_CINV 'import share in composite investment flows'
   {r in Regions, i in Sectors, j in Sectors}
-  = 1 - SHR_YSA_CMED[r, i, j];
-param SHR_YSA_CINV 'import weight in composite investment flows'
+  = 1 - SHR_DOM_CINV[r, i, j];
+param SHR_DOM_CMED 'domestic share in composite intermediate flows'
   {r in Regions, i in Sectors, j in Sectors}
-  default 50e-2;
-param SHR_DOM_CINV 'import weight in composite investment flows'
+  = RAW_DOM_CMED[r, i, j] / (RAW_DOM_CMED[r, i, j] + RAW_YSA_CMED[r, i, j]);
+param SHR_YSA_CMED 'import share in composite intermediate flows'
   {r in Regions, i in Sectors, j in Sectors}
-  = 1 - SHR_YSA_CINV[r, i, j];
 /*=============================================================================
 ===============================================================================
 The variables
@@ -339,10 +366,10 @@ Computed variables for paths
 Potential intermediate variables (substituted out during pre-solving)
 =============================================================================*/
 #-----------variety of consumption aggregator functions 
-var ccon 'Leontief composite consumption good (includes imports)'
+var ccon 'Composite consumption good (Leontief over domestic and imports)'
   {r in Regions, i in Sectors, t in LookForward}
-  = A_CCON * dcon[r, i, t] / SHR_CON_CCON[r, i];
-var ccon_sec_CD 'Cobb--Douglas consumption aggregate (across sectors)'
+  = A_CCON * dcon[r, i, t] / SHR_DOM_CCON[r, i];
+var ccon_sec_CD 'Composite consumption aggregate (Cobb-Douglas across sectors)'
   {r in Regions, t in LookForward}
   = prod{i in Sectors} ccon[r, i, t] ** (SHR_CON[r, i] * SCALE_CON);
 var con_sec_CD 'Cobb--Douglas consumption aggregate (across sectors)'
@@ -365,7 +392,7 @@ Armington variables
 #-----------domestic prices
 var prc_dom_CDL 'domestic price: Cobb-Douglas in sectors Leontief in imports'
   {j in Sectors, t in LookForward}
-  = SCALE_CON * SHR_CON['GLD', j] * (A_CCON / SHR_CON_CCON['GLD', j])
+  = SCALE_CON * SHR_CON['GLD', j] * (A_CCON / SHR_DOM_CCON['GLD', j])
     * (A_CON * ccon_sec_CD['GLD', t] / dcon['GLD', j, t]);
 var prc_dom  'domestic price / the Lagrange multiplier'
   {j in Sectors, t in LookForward}

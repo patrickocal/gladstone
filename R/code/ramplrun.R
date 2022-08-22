@@ -33,12 +33,17 @@ setparval <- function(parname, datadir="../julia/output/"){
   amplparentity$setValues(df)
   return
 }
-setparval("RAW_INV_FLW")
 stop
-setparval("RAW_MED_FLW")
-setparval("RAW_MED_FLW")
-setparval("RAW_MED_FLW")
-setparval("RAW_MED_FLW")
+setparval("RAW_CON")# "raw consumption flows: table8"
+setparval("RAW_INV")# "raw investment flows: tablekapflw"
+setparval("RAW_LAB")
+setparval("RAW_MED")
+setparval("RAW_DOM_CCON")
+setparval("RAW_YSA_CCON")
+setparval("RAW_DOM_CINV")
+setparval("RAW_YSA_CINV")
+setparval("RAW_DOM_CMED")
+setparval("RAW_YSA_CMED")
 
 #ampl$solve()
 # Print out the result

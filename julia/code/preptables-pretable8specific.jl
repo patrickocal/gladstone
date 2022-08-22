@@ -465,13 +465,22 @@ newcoltot = outpersec[1:numrow, 2];
 # with current data, we need to RAS 5 first, so imports are excluded from flows
 tn = "5";
 # make sure we have a valid table and, if so, set it
-println("Table ", tn, " coming up.");
-tabledf = deepcopy(anztable5rr);
+(tn in ["5", "8", "diff"]
+ ? (println("Table ", tn, " coming up.");
+    if tn == "5"; tablerr = anztable5rr;
+    elseif tn == "8"; tablerr = anztable8rr;
+    else tn = "diff"; tablerr = anztablediffrr;
+    end
+   )
+ : println("Error: we have no valid table.")
+)
+tableorigdf = tablerr[1:numrow, Between("A", "Q7")];
+tabledf = tablerr[1:numrow, Between("A", "Q7")];
 for i in range(1, numrow)
   for j in range(1, numcol)
     tabledf[i, j] = (tabledf[i, j] != 0
                    && (tabledf[i, j]
-                       * newrowtot[j] / tabledf[end, j]
+                       * newrowtot[j] / sum(tabledf[:, j])
                       ) 
                   );
   end;
