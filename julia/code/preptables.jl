@@ -452,7 +452,6 @@ println(sum(labpersec[:, 3]) - sum(outpersec[:, 3]));
 #==============================================================================
 RAS
 ==============================================================================#
-
 numrow = size(anztable8rr, 1) - 1;
 Q7col = columnindex(anztable8rr, "Q7");
 Acol = columnindex(anztable8rr, "A");
@@ -466,27 +465,32 @@ newcoltot = outpersec[1:numrow, 2];
 tn = "5";
 # make sure we have a valid table and, if so, set it
 println("Table ", tn, " coming up.");
-tabledf = deepcopy(anztable5rr);
+tableorigdf = anztable5rr[:, Between("A", "T6")];
+tabledf = deepcopy(tableorigdf);
 for i in range(1, numrow)
+  tabledf[i, "T6"] = newcoltot[i];
   for j in range(1, numcol)
-    tabledf[i, j] = (tabledf[i, j] != 0
-                   && (tabledf[i, j]
-                       * newrowtot[j] / tabledf[end, j]
-                      ) 
-                  );
+    tabledf[end, j] = newrowtot[j];
+    (tabledf[i, j] != 0
+     && (tabledf[i, j] = tabledf[i, j] * tabledf[end, j] / tableorigdf[end, j])
+    );
   end;
 end;
-table = Matrix(tabledf)
+(sum(tabledf[end, Between("A", "Q7")]) - sum(tabledf[1:numrow, "T6"]) == 0
+ ? tabledf[end, end] = sum(tabledf[end, Between("A", "Q7")])
+ : println("WARNING: row and column sums don't match!")
+)
+table = Matrix(tabledf[:, Between("A", "T6")])
 # instantiate an optimisation problem
 ras = Model(Ipopt.Optimizer);
 # Should be equal dimensions
-@variable(ras, x[1:numrow, 1:numcol]);
+@variable(ras, x[1:numrow+1, 1:numcol+1]);
 set_start_value.(x, table)
 # Max entropy objective (or min relative to uniform)
 eps = 050e-2;
-shr = zeros(numrow, numcol);
-for i in range(1, numrow)
-  for j in range(1, numcol)
+shr = zeros(numrow+1, numcol+1);
+for i in range(1, numrow+1)
+  for j in range(1, numcol+1)
     shr[i, j] = (1 / count(!iszero, table[:, j]) * 11
                  * ((rand(MersenneTwister(i + j)) - 50e-2) * 10e-2 + 1) 
                 ) ^ (- 1 / eps);
@@ -507,25 +511,27 @@ tol = 1e+0;
 #------------------------------------------------------------------------------
 # the following constraints are not table-specific
 #------------------------------------------------------------------------------
+# Col-sums constraint - must be equal to the IO totals
+for i in range(1, numrow)
+    #@constraint(ras, sum(x[i,:]) <= newcoltot[i] + tol);
+    #@constraint(ras, sum(x[i,:]) >= newcoltot[i] - tol);
+    @constraint(ras, sum(x[i, :]) == 2 * table[i, end]);
+    @constraint(ras, x[i, end] == table[i, end])
+end;
 # Row-sums constraint - must be equal to the GFCF totals
 for j in range(1, numcol)
     #@constraint(ras, sum(x[:, j]) <= newrowtot[j] + tol);
     #@constraint(ras, sum(x[:, j]) >= newrowtot[j] - tol);
-    @constraint(ras, sum(x[:, j]) == newrowtot[j]);
-end;
-# Col-sums constraint - must be equal to the IO totals
-for j in range(1, numrow)
-    #@constraint(ras, sum(x[j,:]) <= newcoltot[j] + tol);
-    #@constraint(ras, sum(x[j,:]) >= newcoltot[j] - tol);
-    @constraint(ras, sum(x[j, :]) == newcoltot[j]);
+    @constraint(ras, sum(x[:, j]) == 2 * table[end, j]);
+    @constraint(ras, x[end, j] == table[end, j])
 end;
 q1col = columnindex(tabledf, :Q1);
 for j in range(1, 20)
     q1tableshr = tableorigdf[j, :Q1] / sum(tableorigdf[1:20, :Q1])
-    @constraint(ras, x[j, q1col] ==  q1tableshr * sum(x[:, q1col]));
+    @constraint(ras, x[j, q1col] ==  q1tableshr * sum(x[1:20, q1col]));
 end;
 Ccol = columnindex(tabledf, :C);
-@constraint(ras, x[4, Ccol] >= 700);
+@constraint(ras, x[4, Ccol] >= 600);
 @constraint(ras, x[3, Ccol] >= 500);
 #@constraint(ras, x[24, Ccol] == -100);
 for i in range(1, numrow)
@@ -543,7 +549,7 @@ end;
 #(tn == 8
 # && (@constraint(sum(x[26, 1:20])
 #                 == sum(anztable5sol[26, Between("Q1", "Q6")]));
-#     (for i in range(1, numrow + 1)
+  #     (for i in range(1, numrow + 1)
 #        for j in range(1, numcol + 1)
 #          @constraint()
 #     );
@@ -562,15 +568,15 @@ for i in range(1, numrow)
 end;
 println("biggest movement is ", maximum(abs.(rawsol - table))
         , "with index ", argmax(abs.(rawsol - table)));
-rowerr = round.(sum(rawsol, dims=1)' - newrowtot; digits=2);
-colerr = round.(sum(rawsol, dims=2) - newcoltot; digits=2);
+rowerr = round.(sum(rawsol[1:end-1,:], dims=1)' - rawsol[end, :]; digits=2);
+colerr = round.(sum(rawsol[:, 1:end-1], dims=2) - rawsol[:, end]; digits=2);
 println("and the errors (rowerr and colerr) are: ")
 println(rowerr')
 println(colerr')
 sol = DataFrame(rawsol, names(tabledf));
-insertcols!(sol, numcol + 1, :T6 => newcoltot);
-insertcols!(sol, 1, :ANZdiv => anztable8rr[1:numrow, 1]);
-push!(sol, [anztable5rr[end, 1] newrowtot' sum(newrowtot)]);
+#insertcols!(sol, numcol + 1, :T6 => newcoltot);
+insertcols!(sol, 1, :ANZdiv => anztable8rr[:, 1]);
+#push!(sol, [anztable5rr[end, 1] newrowtot' sum(newrowtot)]);
 println("and the new table is:")
 print(pretty_table(sol, nosubheader=true, formatters=ft_round(1)));
 # Export tables as CSV
