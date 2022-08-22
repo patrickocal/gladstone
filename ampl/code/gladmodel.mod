@@ -129,7 +129,7 @@ param RAW_YSA_CMED 'raw import flows to intermediates: table(8-5)'
 param RAW_EXO_JOUT 'raw export data: table8Q7'
   {Regions, Sectors}
   default Uniform(UInf, USup) * 10e-2;
-param RAW_DOM_JOUT 'raw total domestic uses: table8'
+param RAW_DOM_JOUT 'raw total domestic uses: table8T6-Q7'
   {Regions, Sectors}
   default Uniform(UInf, USup) * 90e-2;
 /*=============================================================================
