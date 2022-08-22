@@ -51,11 +51,6 @@ param DELTA 'rate of depreciation for kapital' {Sectors} default .025 >= 0;
 param PHI_ADJ 'kapital adjustment cost' {Sectors} default 5e-1 >= 0;
 param GAMMA 'intertemporal elasticity of subst.' {Regions} default 5e-1 >= 0;
 param EPS_LAB 'Frisch elasticity of labour supply' default 5e-1 >= 0;
-#-----------output shares of each component
-param SHR_KAP_OUT 'importance of capital in production' {Sectors}
-  default 33e-2 in (0, 50e-2);
-param SHR_LAB_OUT 'share of labour in output' {Sectors}
-  default 33e-2 in (0, 50e-2);
 param EPS_CON 'elasticity of substitution for consumption flows'
   default 1e-1 > 0; 
 param EPS_OUT 'elasticity of substitution for output components'
@@ -90,26 +85,36 @@ param LabSup 'supremum of interval for labour values' default 66e-2;
 /*=============================================================================
 #-----------raw flow data parameters
 =============================================================================*/
-param RAW_CON "raw consumption flows: table8"
+param RAW_CON_FLW "raw consumption flows: table8Q1"
   {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
-param RAW_INV "raw investment flows: tablekapflw"
+param RAW_INV_FLW "raw investment flows: tablekapflw"
   {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
-param RAW_LAB  "raw consumption flows: table8"
+param RAW_LAB_FLW  "raw number of workers: abs"
   {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
-param RAW_MED "raw intermediate flows: table8"
+param RAW_MED_FLW "raw intermediate flows: table8"
   {Regions, Sectors, Sectors} 
+  default Uniform(UInf, USup) >= 0;
+#-----------raw shares of the three components of output
+param RAW_KAP_OUT 'raw capital primary input flows: table8P2'
+  {Sectors}
+  default Uniform(UInf, USup) >= 0;
+param RAW_LAB_OUT 'raw compensation of employees primary input flows: table8P1'
+  {Sectors}
+  default Uniform(UInf, USup) >= 0;
+param RAW_MED_OUT 'raw total intermediate input flows: table8T1'
+  {Sectors}
   default Uniform(UInf, USup) >= 0;
 #-----------raw Armington data
-param RAW_DOM_CCON 'raw domestic flows to consumption: table5'
+param RAW_DOM_CCON 'raw domestic flows to consumption: table5Q1'
   {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_YSA_CCON 'raw import flows to consumption: table(8-5)'
   {r in Regions, i in Sectors}
   default Uniform(UInf, USup) >= 0;
-param RAW_DOM_CINV 'raw domestic flows to investment: table5'
+param RAW_DOM_CINV 'raw domestic flows to investment: table5Q3+Q4+Q5'
   {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_YSA_CINV 'raw import flows to investment: table(8-5)'
@@ -121,7 +126,7 @@ param RAW_DOM_CMED 'raw domestic flows to intermediates: table5'
 param RAW_YSA_CMED 'raw import flows to intermediates: table(8-5)'
   {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
-param RAW_EXO_JOUT 'raw export data: table8'
+param RAW_EXO_JOUT 'raw export data: table8Q7'
   {Regions, Sectors}
   default Uniform(UInf, USup) * 10e-2;
 param RAW_DOM_JOUT 'raw total domestic uses: table8'
@@ -188,6 +193,13 @@ param RHO_OUT_HAT 'inverse of RHO_OUT', = 1 / RHO_OUT;
 param RHO_CON 'exponent of the CON ces aggregator'
   = 1 - 1 / EPS_CON; 
 param RHO_CON_HAT 'inverse of RHO_CON', = 1 / RHO_OUT;
+#-----------input shares for output
+param SHR_KAP_OUT 'importance of capital in production'
+  {i in Sectors}
+  = RAW_KAP_OUT[i] / (RAW_KAP_OUT[i] + RAW_LAB_OUT[i] + RAW_MED_OUT[i]);
+param SHR_LAB_OUT 'share of labour in output'
+  {i in Sectors}
+  = RAW_LAB_OUT[i] / (RAW_KAP_OUT[i] + RAW_LAB_OUT[i] + RAW_MED_OUT[i]); 
 param SHR_KAPLAB_OUT 'combined importance of kapital and labour in output'
   {i in Sectors}, = SHR_KAP_OUT[i] + SHR_LAB_OUT[i];
 param SHR_MED_OUT 'share of intermediates in output' {i in Sectors}
@@ -310,7 +322,7 @@ param RHO_CMED_HAT 'inverse of CES exponent for composite intermediates'
 param SHR_DOM_CCON 'domestic share in comp. consumption'
   {r in Regions, i in Sectors}
   = RAW_DOM_CCON[r, i] / (RAW_DOM_CCON[r, i] + RAW_YSA_CCON[r, i]);
-param SHR_DOM_CCON 'domestic share in comp. consumption'
+param SHR_YSA_CCON 'domestic share in comp. consumption'
   {r in Regions, i in Sectors}
   = 1 - SHR_DOM_CCON[r, i];
 param SHR_DOM_CINV 'domestic share in composite investment flows'
@@ -324,6 +336,7 @@ param SHR_DOM_CMED 'domestic share in composite intermediate flows'
   = RAW_DOM_CMED[r, i, j] / (RAW_DOM_CMED[r, i, j] + RAW_YSA_CMED[r, i, j]);
 param SHR_YSA_CMED 'import share in composite intermediate flows'
   {r in Regions, i in Sectors, j in Sectors}
+  = 1 - SHR_DOM_CMED[r, i, j];
 /*=============================================================================
 ===============================================================================
 The variables
@@ -433,7 +446,7 @@ var cinv 'composite investment flows'
 #-----------exports (other variables appear after output)
 param SHR_EXO_JOUT 'share of exports in output (joint production CET function)'
   {r in Regions, i in Sectors}
-  = RAW_EXO_JOUT[r, i] / (RAW_DOM_JOUT[r, i] + RAW_EXO_JOUT[r, i];
+  = RAW_EXO_JOUT[r, i] / (RAW_DOM_JOUT[r, i] + RAW_EXO_JOUT[r, i]);
 param SHR_DOM_JOUT 'share of domestic uses in output (CET function)'
   {r in Regions, i in Sectors}
   = 1 - SHR_EXO_JOUT[r, i];
@@ -830,7 +843,6 @@ for {i in Sectors}{
   let A[i] := c10A; #* (card(Sectors) / 20) ** (1 - 20e-2);
   let DELTA[i] := 05e-2;
   let PHI_ADJ[i] := 300e-2;
-  let SHR_KAP_OUT[i] := 33e-2;
   };
 for {r in Regions, i in Sectors}{
   let KAP[r, i, PInf] := 1;
