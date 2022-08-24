@@ -4,11 +4,11 @@ using XLSX, ExcelReaders, DataFrames, Tables, JuMP, Ipopt, NamedArrays, Delimite
 
 #filepath cross system compatability code
 if Sys.KERNEL === :NT || Sys.KERNEL === :Windows
-    pathmark = "\\";
+    sep = "\\";
 else
-    pathmark = "/";
+    sep = "/";
 end
-
+datadir = "julia"*sep*"data"*sep
 #20 Sector to 4 Sector
 from20To4 = Dict(
   "A"=> "Primary",
@@ -34,7 +34,7 @@ from20To4 = Dict(
  )
 
 #IOIG to 20 Sector
-IOSource = ExcelReaders.readxlsheet("data"*pathmark*"5209055001DO001_201819.xls", "Table 8");
+IOSource = ExcelReaders.readxlsheet(datadir*"5209055001DO001_201819.xls", "Table 8");
 IOIG = IOSource[4:117, 1];
 ANZSICDiv = ["Agriculture, Forestry and Fishing",
              "Mining",
@@ -143,7 +143,7 @@ function mapioig20(ioigcol)
 end
 IOIGTo20 = mapioig20(IOIG)
 #ISIC 4.0 To 20 Sectors
-ANZSICISICSource = CSV.read("data"*pathmark*"ANZSIC06-ISIC3pt1.csv", DataFrame);
+ANZSICISICSource = CSV.read(datadir*"ANZSIC06-ISIC3pt1.csv", DataFrame);
 ANZSIC20 = ANZSICISICSource[6:1484, 1][findall(x -> typeof(x)<:String15, ANZSICISICSource[6:1484, 4])];
 ISIC = ANZSICISICSource[6:1484, 4][findall(x -> typeof(x)<:String15, ANZSICISICSource[6:1484, 4])];
 for i in eachindex(ISIC);
@@ -152,7 +152,7 @@ end
 ISICTo20 = Dict(ISIC .=> ANZSIC20);
 
 #NAIC2007 To 20 Sectors via ISIC 4.0
-NAICSISICSource = ExcelReaders.readxlsheet("data"*pathmark*"2007_NAICS_to_ISIC_4.xls", "NAICS 07 to ISIC 4 technical");
+NAICSISICSource = ExcelReaders.readxlsheet(datadir*"2007_NAICS_to_ISIC_4.xls", "NAICS 07 to ISIC 4 technical");
 NAICS = string.(Int.(NAICSISICSource[4:1768,1]));
 ISICAsANZSIC = NAICSISICSource[4:1768,3];
 ISICAsANZSIC = string.(ISICAsANZSIC);
@@ -166,7 +166,7 @@ end
 NAICS07To20 = Dict(NAICS .=> NAICSANZSIC20);
 
 #NAIC2002 To 20 Sectors via NAIC2007
-NAICS02To07 = CSV.read("data"*pathmark*"2002_to_2007_NAICS.csv", DataFrame);
+NAICS02To07 = CSV.read(datadir*"2002_to_2007_NAICS.csv", DataFrame);
 NAICS02To0702 = string.(NAICS02To07[3:1202, 1]);
 NAICS02To0707 = string.(NAICS02To07[3:1202, 3]);
 NAICS07As20 = string.(zeros(length(NAICS02To0707)));
@@ -176,7 +176,7 @@ end
 NAICS02To20 = Dict(NAICS02To0702 .=> NAICS07As20);
 
 #NAIC1997 To 20 Sectors via NAIC2002
-NAICS97To02 = CSV.read("data"*pathmark*"1997_NAICS_to_2002_NAICS.csv", DataFrame);
+NAICS97To02 = CSV.read(datadir*"1997_NAICS_to_2002_NAICS.csv", DataFrame);
 NAICS97To0297 = string.(NAICS97To02[1:1355, 1]);
 NAICS97To0202 = string.(NAICS97To02[1:1355, 3]);
 NAICS02As20 = string.(zeros(length(NAICS97To0202)));
@@ -188,7 +188,7 @@ NAICS97To0297Trunc = first.(string.(NAICS97To02[1:1355, 1]),4);
 NAICS97To20Trunc = Dict(NAICS97To0297Trunc .=> NAICS02As20);
 
 #Comm180 To 20 Sectors via NAIC 1997
-NAICS97ToComm180 = CSV.read("data"*pathmark*"NAICS_to_Comm180.csv", DataFrame);
+NAICS97ToComm180 = CSV.read(datadir*"NAICS_to_Comm180.csv", DataFrame);
 NAICS97ToComm18097 = first.([NAICS97ToComm180[1:90,4];NAICS97ToComm180[1:89,9]],4);
 containsStar = findall( x -> occursin("*", x), NAICS97ToComm18097);
 NAICS97ToComm18097[containsStar] = replace.(NAICS97ToComm18097[containsStar], "*" => "");
@@ -212,4 +212,4 @@ Comm180To20=Dict(NAICS97ToComm180180 .=> NAICS97As20);
 
 #Final concordance
 finalConcordance = [NAICS97ToComm180180 NAICS97As20];
-writedlm("data"*pathmark*"Comm180To20Concordance.csv", finalConcordance, ',');
+writedlm(datadir*"Comm180To20Concordance.csv", finalConcordance, ',');

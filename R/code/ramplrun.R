@@ -4,12 +4,13 @@ library(rAMPL)
 ampl <- new(AMPL)
 
 # path to model file.
-modeldir <- "../ampl/code/"
+modeldir <- "ampl/code/"
 # Read the model file.
 ampl$read(paste(modeldir, "gladmodel.mod", sep=""))
 # path to data
-setparval <- function(parname, datadir="../julia/output/"){
-#parname = "RAW_INV_FLW"
+datadir="julia/output/"
+#parname = "RAW_MED_FLW"
+setparval <- function(parname, datadir="julia/output/"){
   amplparentity <- ampl$getParameter(parname);
   parvalmlls <- amplparentity$getInstances();
   numrow = length(parvalmlls);
@@ -25,7 +26,8 @@ setparval <- function(parname, datadir="../julia/output/"){
   }
   colnames(df) = nom
   newdatadf <- read.csv(file = paste(datadir, parname, ".csv", sep=""))
-  newdatadf[newdatadf<0] <- 0
+  newdatadf[newdatadf < 0] <- 0
+  newdatadf[newdatadf == 0] = 1e-0
   newdatacol <- matrix(t(as.matrix(newdatadf[,-1])),
                        nrow=numrow, ncol=1,
                        byrow=TRUE)
@@ -33,18 +35,30 @@ setparval <- function(parname, datadir="../julia/output/"){
   amplparentity$setValues(df)
   return
 }
-stop
-setparval("RAW_CON")# "raw consumption flows: table8"
-setparval("RAW_INV")# "raw investment flows: tablekapflw"
-setparval("RAW_LAB")
-setparval("RAW_MED")
+cat(sprintf("Loading the data. "))
+# basic
+setparval("RAW_CON_FLW")# "raw consumption flows: table8"
+setparval("RAW_INV_FLW")# "raw investment flows: tablekapflw"
+setparval("RAW_MED_FLW")
+# output
+setparval("RAW_KAP_OUT")
+setparval("RAW_LAB_OUT")
+# imports
 setparval("RAW_DOM_CCON")
 setparval("RAW_YSA_CCON")
-setparval("RAW_DOM_CINV")
-setparval("RAW_YSA_CINV")
 setparval("RAW_DOM_CMED")
 setparval("RAW_YSA_CMED")
+# exports
+setparval("RAW_EXO_JOUT")
+setparval("RAW_DOM_JOUT")
+setparval("RAW_LAB_FLW")
+setparval("RAW_MED_OUT")
+cat(sprintf("The data has been loaded."))
 
+stop("stopping here")
+
+setparval("RAW_DOM_CINV")
+setparval("RAW_YSA_CINV")
 #ampl$solve()
 # Print out the result
 #cat(sprintf("Objective: %f\n", ampl$getObjective("pres_disc_val")$value()))

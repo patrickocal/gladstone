@@ -28,7 +28,7 @@ for {s in PathTimes}{
   SCALE_CON, SCALE_INV, SCALE_MED, SCALE_OUT, SCALE_LAB,
   SCALE_CMED, SCALE_CINV;
 #-----------in this algorithm other variables automatically get warm start
-  display E_out['GLD', 'O', LInf], con['GLD', 'O', LInf];
+#  display E_out['GLD', 'O', LInf], con['GLD', 'O', LInf];
 #-----------set and solve the plan for start time s
   objective pres_disc_val;
   let InstanceName := ("maiwar"

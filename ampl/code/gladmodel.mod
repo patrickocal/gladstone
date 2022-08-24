@@ -5,12 +5,12 @@ Cai--Judd (2021) to include multiple sectors among among other things. If any
 part of this code is re-used, please cite OCallaghan (2022).
 =============================================================================*/
 
-/*=============================================================================
-THE MODEL starts here
-=============================================================================*/
-/*=============================================================================
-Parameters for generating sets
-=============================================================================*/ 
+#==============================================================================
+# THE MODEL starts here
+#==============================================================================
+#==============================================================================
+# Parameters for generating sets
+#==============================================================================
 param TInf 'infimum of the set of times' default 0;
 param LInf 'start period/infimum of the look forward set', default 0;
 param LSup 'supremum of the look forward set' > LInf, default 48e+0; 
@@ -18,9 +18,9 @@ param PInf 'infimum of times on a path', default 0;
 param PSup 'supremum of times on a path (T_star in CJ)'# eg 2050 - 2022 = 28 
   default 3 >= PInf; 
 param TSup 'final time' >= PInf + LInf, default PSup + LSup;
-/*=============================================================================
-Sets
-=============================================================================*/ 
+#==============================================================================
+# Sets
+#============================================================================== 
 set Regions; 
 set Sectors ordered;
 #-----------the planning horizon and corresponding set:
@@ -37,9 +37,9 @@ set PathSpace 'path space: the set of paths'
   # for default we adopt a two-state Markov chain with unique absorbing state
     default {PInf .. PSup + 1};  
 set AllTimes 'all time periods associated with a path' = {TInf .. TSup};                      
-/*=============================================================================
-Parameters
-=============================================================================*/
+#==============================================================================
+#-----------Parameters
+#==============================================================================
 param StrtTm 'start time for each step on each path' {PathTimes, PathSpace}
   default time();
 param EndTm 'start time for each step on each path' {PathTimes, PathSpace}
@@ -82,9 +82,53 @@ param VSup 'supremum of interval for basic variables' default 1e+5;
 param OInf 'infimum of interval for observed/actual values' default 1e-7;
 param OSup 'supremum of interval for observed/actual values' default 1e+7;
 param LabSup 'supremum of interval for labour values' default 66e-2;
-/*=============================================================================
-#-----------raw flow data parameters
-=============================================================================*/
+#==============================================================================
+#-----------parameters for storing (observable) path values
+#==============================================================================
+param CON 'observed consumption' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param INV_SEC 'observed investment' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param INV_SUM 'observed total investment' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param MED_SUM 'observed total intermediate flows' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param LAB 'observed labour' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param LAB_EXT 'observed laborforce participation' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param KAP 'observed kapital' {Regions, Sectors, PathTimesClosure}
+  default 1e+0; # in (OInf, OSup);
+param E_OUT 'observed Exp. output' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param ADJ_COST_KAP 'observed adjustment costs of kapital'
+  {Regions, Sectors, PathTimes} default 0; # in [0, OSup);
+param MKT_CLR 'observed output' {Sectors, PathTimes}
+  default 0; # in (-1e-4, 1e-4); 
+param DUAL_KAP 'lagrange multiplier for kapital accumulation'
+  {Regions, Sectors, PathTimes} default 1e+0; # in (-OSup, OSup);
+param DUAL_MKT_CLR 'lagrange multiplier for market clearing constraint'
+  {Sectors, PathTimes} default 1e+0;# in [0, OSup);
+param GROWTH_KAP 'observed growth rate for kapital'
+  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
+param GROWTH_OUT 'observed growth rate for output'
+  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
+param EULER_INTEGRAND 'Euler error integrand'
+  {Regions, Sectors, PathTimesClosure} default 1; # in (-OSup, OSup);
+param EULER_RATIO 'Expected Euler ratio'
+  {Regions, Sectors, PathTimes} default 1; # in (-1e+2, 1e+2);
+param NAIRE 'Non-accelerating rate of employment'
+  {Regions, Sectors, PathTimes} default 95e-2;
+param EXP_LAB_EXT 'Exponent of lab_ext_sec'
+  {Regions, Sectors, PathTimes} default 200e-2;
+param DOM 'actual path values for domestic output'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+#==============================================================================
+# raw flow data parameters
+#==============================================================================
+#-----------set the seed for the random number generator for weights
+option randseed 12345;
 param RAW_CON_FLW "raw consumption flows: table8Q1"
   {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
@@ -132,51 +176,9 @@ param RAW_EXO_JOUT 'raw export data: table8Q7'
 param RAW_DOM_JOUT 'raw total domestic uses: table8T6-Q7'
   {Regions, Sectors}
   default Uniform(UInf, USup) * 90e-2;
-/*=============================================================================
-#-----------parameters for storing (observable) path values
-=============================================================================*/
-param CON 'observed consumption' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param INV_SEC 'observed investment' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param INV_SUM 'observed total investment' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup); 
-param MED_SUM 'observed total intermediate flows' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup); 
-param LAB 'observed labour' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param LAB_EXT 'observed laborforce participation' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param KAP 'observed kapital' {Regions, Sectors, PathTimesClosure}
-  default 1e+0; # in (OInf, OSup);
-param E_OUT 'observed Exp. output' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup); 
-param ADJ_COST_KAP 'observed adjustment costs of kapital'
-  {Regions, Sectors, PathTimes} default 0; # in [0, OSup);
-param MKT_CLR 'observed output' {Sectors, PathTimes}
-  default 0; # in (-1e-4, 1e-4); 
-param DUAL_KAP 'lagrange multiplier for kapital accumulation'
-  {Regions, Sectors, PathTimes} default 1e+0; # in (-OSup, OSup);
-param DUAL_MKT_CLR 'lagrange multiplier for market clearing constraint'
-  {Sectors, PathTimes} default 1e+0;# in [0, OSup);
-param GROWTH_KAP 'observed growth rate for kapital'
-  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
-param GROWTH_OUT 'observed growth rate for output'
-  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
-param EULER_INTEGRAND 'Euler error integrand'
-  {Regions, Sectors, PathTimesClosure} default 1; # in (-OSup, OSup);
-param EULER_RATIO 'Expected Euler ratio'
-  {Regions, Sectors, PathTimes} default 1; # in (-1e+2, 1e+2);
-param NAIRE 'Non-accelerating rate of employment'
-  {Regions, Sectors, PathTimes} default 95e-2;
-param EXP_LAB_EXT 'Exponent of lab_ext_sec'
-  {Regions, Sectors, PathTimes} default 200e-2;
-param DOM 'actual path values for domestic output'
-  {Regions, Sectors, PathTimes}
-  default 100e-2;
-/*=============================================================================
-Computed parameters
-=============================================================================*/
+#==============================================================================
+# Computed parameters
+#==============================================================================
 param GAMMA_HAT 'utility parameter' {r in Regions} = 1 - 1 / GAMMA[r];
 param RHO_LAB 'labour exponent parameter' = 1 + 1 / EPS_LAB;
 param RHO_LAB_HAT 'inverse of labour exponent parameter'
@@ -193,6 +195,27 @@ param RHO_OUT_HAT 'inverse of RHO_OUT', = 1 / RHO_OUT;
 param RHO_CON 'exponent of the CON ces aggregator'
   = 1 - 1 / EPS_CON; 
 param RHO_CON_HAT 'inverse of RHO_CON', = 1 / RHO_OUT;
+#-----------productivity and relative importance of labour in utility
+param A 'productivity trend' {i in Sectors}
+  default 1; #(1 - (1 - DELTA[i]) * BETA) / (SHR_KAP_OUT_CES[i] * BETA) >= 0;
+param A_LAB 'importance of disutility of labour (weight in utility function)' 
+  {Regions, LookForwardClosure}
+    default -1;
+param A_LAB_EXT 'disutility weight for labourforce deviations in utility'
+  default -1;
+  #(1 - SHR_KAP_OUT_CES[i]) * A[i] * (A[i] - DELTA[i]) ** (-1 / GAMMA[r]) >= 0;
+param A_CON 'importance of consumption in utility'
+  default 1;
+param A_VAL 'Calibration factor for terminal value function'
+  default 1;
+param A_INV 'Calibration factor for investment'
+  default 1;
+param A_MED 'Calibration factor for intermediate bundle'
+  default 1;
+param  REG_WGHT 'regional (population) weights' {r in Regions}
+  default 1 / card(Regions);
+#-----------Share parameters in the aggregators for utility and production.
+#-----------For default values, we draw from the uniform distribution.
 #-----------input shares for output
 param SHR_KAP_OUT 'importance of capital in production'
   {i in Sectors}
@@ -213,29 +236,6 @@ param SHR_KAPLAB_OUT_CES 'combined importance of kapital and labour in prod'
   {i in Sectors} = SHR_KAPLAB_OUT[i] ** (1 / EPS_OUT);
 param SHR_MED_OUT_CES 'importance of intermediates in production'
   {i in Sectors} = SHR_MED_OUT[i] ** (1 / EPS_OUT);
-#-----------productivity and relative importance of labour in utility
-param A 'productivity trend' {i in Sectors}
-  default 1; #(1 - (1 - DELTA[i]) * BETA) / (SHR_KAP_OUT_CES[i] * BETA) >= 0;
-param A_LAB 'importance of disutility of labour (weight in utility function)' 
-  {Regions, LookForwardClosure}
-    default -1;
-param A_LAB_EXT 'disutility weight for labourforce deviations in utility'
-  default -1;
-  #(1 - SHR_KAP_OUT_CES[i]) * A[i] * (A[i] - DELTA[i]) ** (-1 / GAMMA[r]) >= 0;
-param A_CON 'importance of consumption in utility'
-  default 1;
-param A_VAL 'Calibration factor for terminal value function'
-  default 1;
-param A_INV 'Calibration factor for investment'
-  default 1;
-param A_MED 'Calibration factor for intermediate bundle'
-  default 1;
-param  REG_WGHT 'regional (population) weights' {r in Regions}
-  default 1 / card(Regions);
-#-----------set the seed for the random number generator for weights
-option randseed 12345;
-#-----------Share parameters in the aggregators for utility and production.
-#-----------For default values, we draw from the uniform distribution.
 #-----------consumption
 param CON_FLW_SUM {r in Regions}
   = sum{i in Sectors} RAW_CON_FLW[r, i];
@@ -272,6 +272,25 @@ param SHR_MED_CES "sectoral share of i in j's CES intermediate aggregator"
 param SHR_LAB_CES "sectoral share of i in the CES labour aggregator"
   {r in Regions, i in Sectors}
     = SHR_LAB[r, i] ** (- 1 / EPS_LAB);
+#-----------Armington share parameters
+param SHR_DOM_CCON 'domestic share in comp. consumption'
+  {r in Regions, i in Sectors}
+  = RAW_DOM_CCON[r, i] / (RAW_DOM_CCON[r, i] + RAW_YSA_CCON[r, i]);
+param SHR_YSA_CCON 'domestic share in comp. consumption'
+  {r in Regions, i in Sectors}
+  = 1 - SHR_DOM_CCON[r, i];
+param SHR_DOM_CINV 'domestic share in composite investment flows'
+  {r in Regions, i in Sectors, j in Sectors}
+  = RAW_DOM_CINV[r, i, j] / (RAW_DOM_CINV[r, i, j] + RAW_YSA_CINV[r, i, j]);
+param SHR_YSA_CINV 'import share in composite investment flows'
+  {r in Regions, i in Sectors, j in Sectors}
+  = 1 - SHR_DOM_CINV[r, i, j];
+param SHR_DOM_CMED 'domestic share in composite intermediate flows'
+  {r in Regions, i in Sectors, j in Sectors}
+  = RAW_DOM_CMED[r, i, j] / (RAW_DOM_CMED[r, i, j] + RAW_YSA_CMED[r, i, j]);
+param SHR_YSA_CMED 'import share in composite intermediate flows'
+  {r in Regions, i in Sectors, j in Sectors}
+  = 1 - SHR_DOM_CMED[r, i, j];
 /*-----------------------------------------------------------------------------
 uncertainty parameters
 -----------------------------------------------------------------------------*/
@@ -318,25 +337,6 @@ param RHO_CMED 'CES exponent for composite intermediates'
 param RHO_CMED_HAT 'inverse of CES exponent for composite intermediates'
   {r in Regions, i in Sectors, j in Sectors}
   = 1 / RHO_CMED[r, i, j];
-#-----------share parameters
-param SHR_DOM_CCON 'domestic share in comp. consumption'
-  {r in Regions, i in Sectors}
-  = RAW_DOM_CCON[r, i] / (RAW_DOM_CCON[r, i] + RAW_YSA_CCON[r, i]);
-param SHR_YSA_CCON 'domestic share in comp. consumption'
-  {r in Regions, i in Sectors}
-  = 1 - SHR_DOM_CCON[r, i];
-param SHR_DOM_CINV 'domestic share in composite investment flows'
-  {r in Regions, i in Sectors, j in Sectors}
-  = RAW_DOM_CINV[r, i, j] / (RAW_DOM_CINV[r, i, j] + RAW_YSA_CINV[r, i, j]);
-param SHR_YSA_CINV 'import share in composite investment flows'
-  {r in Regions, i in Sectors, j in Sectors}
-  = 1 - SHR_DOM_CINV[r, i, j];
-param SHR_DOM_CMED 'domestic share in composite intermediate flows'
-  {r in Regions, i in Sectors, j in Sectors}
-  = RAW_DOM_CMED[r, i, j] / (RAW_DOM_CMED[r, i, j] + RAW_YSA_CMED[r, i, j]);
-param SHR_YSA_CMED 'import share in composite intermediate flows'
-  {r in Regions, i in Sectors, j in Sectors}
-  = 1 - SHR_DOM_CMED[r, i, j];
 /*=============================================================================
 ===============================================================================
 The variables
@@ -822,14 +822,14 @@ set Sectors := A B C D E F G H Is J K L M N O P Q R S T;
 #set Sectors := A B C D E F G H I J K L M N O P Q R T U
 #  A1 B1 C1 D1 E1 F1 G1 H1 I1 J1 K1 L1 M1 N1 O1 P1 Q1 R1 T1 U1
 #  A2 B2 C2 D2 E2 F2 G2 H2 I2 J2 K2 L2 M2 N2 O2 P2 Q2 R2 T2 U2;
-/*-----------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 #-----------set the horizon and length of paths
------------------------------------------------------------------------------*/
+#------------------------------------------------------------------------------
 let LSup := 15;
 let PSup := 61;
-/*-----------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 #-----------opportunity to tune the calibration factors (still part of data)
------------------------------------------------------------------------------*/
+#------------------------------------------------------------------------------
 let ALPHA := 1;#271828182846e-11;
 let ALPHA_0 := 1;#271828182846e-11;
 let ALPHA := 271828182846e-11;
@@ -847,11 +847,11 @@ for {i in Sectors}{
 for {r in Regions, i in Sectors}{
   let KAP[r, i, PInf] := 1;
 };
-let A_CON := 09100e-2; #increase this to increase labour
+let A_CON := 05100e-2; #increase this to increase labour
 let A_INV := 0010e-2;
 let A_MED := 0010e-2;
 let A_VAL := 0001e-2;
-let A_LAB_EXT := -0845e-2;
+let A_LAB_EXT := -0145e-2;
 #let A_CMED := 1;
 let TAIL_SHR_CON := 045e-2;
 
@@ -867,10 +867,10 @@ let SCALE_OUT := 999e-3;
 let SCALE_CMED := 990e-3;
 let SCALE_CINV := 990e-3;
 let EPS_LAB := 050e-2;
-let SCALE_LAB := 1200e-2;
+let SCALE_LAB := 600e-2;
 for {r in Regions, j in Sectors, t in LookForward}{
   fix lab[r, j, t] := 33e-2;
-  let NAIRE[r, j, t] := 80e-2;
+  let NAIRE[r, j, t] := 95e-2;
   let EXP_LAB_EXT[r, j, t] := 2;
 };
 
