@@ -158,10 +158,10 @@ param RAW_DOM_CCON 'raw domestic flows to consumption: table5Q1'
 param RAW_YSA_CCON 'raw import flows to consumption: table(8-5)'
   {r in Regions, i in Sectors}
   default Uniform(UInf, USup) >= 0;
-param RAW_DOM_CINV 'raw domestic flows to investment: table5Q3+Q4+Q5'
+param RAW_DOM_CINV 'raw domestic flows to investment: kapflows per table5'
   {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
-param RAW_YSA_CINV 'raw import flows to investment: table(8-5)'
+param RAW_YSA_CINV 'raw import flows to investment: kapflows per tablediff'
   {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_DOM_CMED 'raw domestic flows to intermediates: table5'

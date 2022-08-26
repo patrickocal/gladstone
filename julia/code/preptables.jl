@@ -109,38 +109,6 @@ rename!(flows, :S_sum => :S)
 #------------------------------------------------------------------------------
 fyend = "2019"
 #==============================================================================
-Aggregate GFCF data
-==============================================================================#
-
-# Bring in GFCF data from excel
-ausGFCFall = ExcelReaders.readxlsheet(
-  datadir*"5204064_GFCF_By_Industry_Asset.xls", "Data1"
-);
-ausGFCFall[1, 1] = "top corner";
-# remove columns
-ausGFCFall = ausGFCFall[:,
-  Not(findall(x -> occursin("ALL INDUSTRIES ;", x), string.(ausGFCFall[1,:])))
-];
-# select current totals
-ausGFCFcurrent = ausGFCFall[:,
-  findall(x -> 
-          occursin("Gross fixed capital formation: Current", x)
-          | occursin("Dwellings: Current", x)
-          | occursin("transfer costs: Current", x),
-    string.(ausGFCFall[1,:]))
-];
-# Select dates column
-ausGFCFdates = ausGFCFall[:,1];
-ausGFCFcurrent = hcat(ausGFCFdates, ausGFCFcurrent);
-ausGFCFrow= ausGFCFcurrent[
-  findall(x -> occursin(fyend, x), string.(ausGFCFcurrent[:,1])), :];
-# add ownership transfer costs to dwellings
-ausGFCFrow[length(ausGFCFrow) - 1] = (ausGFCFrow[length(ausGFCFrow) - 1]
-                                      + ausGFCFrow[length(ausGFCFrow)]);
-# remove date column and ownership transfer costs
-ausGFCFrow = ausGFCFrow[Not(1, length(ausGFCFrow))];
-
-#==============================================================================
 wrangle the IO table
 ==============================================================================#
 # Import IO data
@@ -745,31 +713,66 @@ soldiff[:, 2:end] = rawsol8 - rawsol5;
 println("and the new table of differences is: ")
 println(pretty_table(soldiff, nosubheader=true, formatters=ft_round(1)));
 
-stop
 #==============================================================================
-old kapital ras prep
+kapital ras prep
 ==============================================================================#
-#table 5
-ioigGfcf = sol5[1:numdiv, :Q3] + sol5[1:numsec, :Q4];
-ioigGfcftot = sum(ioigGfcf)
-ioigGfcf = ioigGfcf[1 : numioig] / ioigGfcf[T1row] * ioigGfcftot;
-ioigGfcf = DataFrame(:inv => ioigGfcf);
-#
-anzdivgfcf = combine(splitIndustry, valuecols(splitIndustry) .=> sum);
-sort!(anzdivgfcf);
+#table 8
+gfcfioig = (anztable8rr[1:numdiv, :Q3]
+            + anztable8rr[1:numdiv, :Q4] + anztable8rr[1:numdiv, :Q5]);
+gfcfioigtot = sum(gfcfioig)
+#==============================================================================
+Aggregate GFCF data
+==============================================================================#
+
+# Bring in GFCF data from excel
+ausGFCFall = ExcelReaders.readxlsheet(
+  datadir*"5204064_GFCF_By_Industry_Asset.xls", "Data1"
+);
+ausGFCFall[1, 1] = "top corner";
+# remove columns
+ausGFCFall = ausGFCFall[:,
+  Not(findall(x -> occursin("ALL INDUSTRIES ;", x), string.(ausGFCFall[1,:])))
+];
+# select current totals
+ausGFCFcurrent = ausGFCFall[:,
+  findall(x -> 
+          occursin("Gross fixed capital formation: Current", x)
+          | occursin("Dwellings: Current", x)
+          | occursin("transfer costs: Current", x),
+    string.(ausGFCFall[1,:]))
+];
+# Select dates column
+ausGFCFdates = ausGFCFall[:,1];
+ausGFCFcurrent = hcat(ausGFCFdates, ausGFCFcurrent);
+gfcfbiba= ausGFCFcurrent[
+  findall(x -> occursin(fyend, x), string.(ausGFCFcurrent[:,1])), :];
+# exclude ownership transfer costs to dwellings
+#gfcfbiba[length(gfcfbiba) - 1] = (gfcfbiba[length(gfcfbiba) - 1]
+#                                      + gfcfbiba[length(gfcfbiba)]);
+# remove date column and ownership transfer costs
+gfcfbiba = gfcfbiba[Not(1, length(gfcfbiba))];
+
+# no ownership of dwellings
+gfcfbiba[12] += gfcfbiba[numdiv + 1];
+gfcfbiba = gfcfbiba[Not(numdiv + 1)];
+gfcfbibatot = sum(gfcfbiba);
 
 # Balancing row and column sums to IO table 8 total
-ausGFCFtot = sum(ausGFCFrow);
-for i in eachindex(ausGFCFrow)
-    ausGFCFrow[i] = ausGFCFrow[i] * ioigGfcftot / ausGFCFtot;
+println("Before balancing, the difference between the two gfcf totals is: ",
+        gfcfioigtot - gfcfbibatot)
+for i in eachindex(gfcfbiba)
+    gfcfbiba[i] = gfcfbiba[i] / gfcfbibatot * gfcfioigtot;
 end;
+println("gfcfbiba has been normalised to match the gfcfioig total.");
+
+# prior via excel:
 # pull in proportionalised kapital flows to ras
-y = DataFrame(CSV.File(datadir*"propd-to-ras.csv", header=false))
-y = Matrix(y)
+#y = DataFrame(CSV.File(datadir*"propd-to-ras.csv", header=false))
+#y = Matrix(y)
 # generate an initial table for the ras
-#y = zeros(length(ausGFCFrow), length(anzdivgfcf.inv_sum))
-#for i in eachindex(ausGFCFrow), j in eachindex(anzdivgfcf);
-#  y[i, j] = anzdivgfcf[i] / ioigGfcftot * ausGFCFrow[j]
+#y = zeros(length(gfcfbiba), length(anzdivgfcf.inv_sum))
+#for i in eachindex(gfcfbiba), j in eachindex(anzdivgfcf);
+#  y[i, j] = anzdivgfcf[i] / gfcfioigtot * gfcfbiba[j]
 #end  
 
 #==============================================================================
@@ -777,16 +780,12 @@ Make prior scaled from Aus Data
 ==============================================================================#
 # Make vector of the proportion of each row sum element as a fraction of the 
 # total
-rowSumsProps = ones(numdiv);
-ausGFCFtot = sum(ausGFCFrow);
-for i in 1:numdiv
-    rowSumsProps[i] = ausGFCFrow[i] / ausGFCFtot;
-end
-# Make prior
-ausPropPrior = ones(numdiv, numdiv);
+gfcfbibatot = sum(gfcfbiba);
+# In the initial prior, every column has the same cost structure
+ausprior = ones(numdiv, numdiv);
 for i in 1:numdiv
     for j in 1:numdiv
-        ausPropPrior[i,j] = rowSumsProps[j] *  anzdivgfcf.inv_sum[i];
+        ausprior[i,j] = gfcfioig[i] / gfcfioigtot;
     end
 end
 
@@ -810,11 +809,13 @@ sort!(flows)
 flowsTemp = deepcopy(flows);
 flowsColSum = sum(eachcol(select!(flowsTemp, Not(:Industry))));
 
+stop
+
 # Adding dwellings column
 #flows[!, :T] = flowsColSum *rowSumsProps[numdiv];
 
 # Adding public admin column
-flows[!, :O] = flowsColSum *rowSumsProps[15];
+flows[!, :O] = flowsColSum * ;
 
 # Sorting columns
 flows = (flows[!, [:Industry, :A, :B, :C, :D, :E, :F, :G, :H, :I, :J, :K, :L, 
@@ -829,7 +830,7 @@ flowsTempSum = sum(Matrix(flowsTemp));
 print(flowsTemp)
 for i in 1:ncol(flowsTemp)
     for j in 1:nrow(flowsTemp)
-        flowsTemp[j,i] = flowsTemp[j,i] / flowsTempSum * ausGFCFtot;
+        flowsTemp[j,i] = flowsTemp[j,i] / flowsTempSum * gfcfbibatot;
     end
 end
 print(flowsTemp)
