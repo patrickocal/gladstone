@@ -811,14 +811,16 @@ flowsTemp = deepcopy(flows);
 flowsColSum = sum(eachcol(select!(flowsTemp, Not(:Industry))));
 
 # Adding dwellings column
-flows[!, :T] = flowsColSum *rowSumsProps[numdiv];
+#flows[!, :T] = flowsColSum *rowSumsProps[numdiv];
 
 # Adding public admin column
 flows[!, :O] = flowsColSum *rowSumsProps[15];
 
 # Sorting columns
 flows = (flows[!, [:Industry, :A, :B, :C, :D, :E, :F, :G, :H, :I, :J, :K, :L, 
-    :M, :N, :O, :P, :Q, :R, :S, :T]])
+    :M, :N, :O, :P, :Q, :R, :S,
+ #   :T
+   ]])
 
 # Scale to Aus Data
 flowsTemp = deepcopy(flows);
