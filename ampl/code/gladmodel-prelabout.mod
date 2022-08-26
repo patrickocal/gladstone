@@ -118,7 +118,7 @@ param EULER_INTEGRAND 'Euler error integrand'
 param EULER_RATIO 'Expected Euler ratio'
   {Regions, Sectors, PathTimes} default 1; # in (-1e+2, 1e+2);
 param NAIRE 'Non-accelerating rate of employment'
-  {Regions, Sectors, PathTimes} default 100e-2;
+  {Regions, Sectors, PathTimes} default 95e-2;
 param EXP_LAB_EXT 'Exponent of lab_ext_sec'
   {Regions, Sectors, PathTimes} default 200e-2;
 param DOM 'actual path values for domestic output'
@@ -223,7 +223,8 @@ param SHR_LAB_OUT 'share of labour in output'
   = RAW_LAB_OUT[i] / (RAW_KAP_OUT[i] + RAW_LAB_OUT[i] + RAW_MED_OUT[i]); 
 param SHR_KAP_OUT 'importance of capital in production'
   {i in Sectors}
-  = RAW_KAP_OUT[i] / (RAW_KAP_OUT[i] + RAW_LAB_OUT[i] + RAW_MED_OUT[i]);
+  = RAW_KAP_OUT[i] / (RAW_KAP_OUT[i] + RAW_LAB_OUT[i] + RAW_MED_OUT[i])
+    / SHR_LAB_OUT[i];
 param SHR_KAPLAB_OUT 'combined importance of kapital and labour in output'
   {i in Sectors}, = SHR_KAP_OUT[i] + SHR_LAB_OUT[i];
 param SHR_MED_OUT 'share of intermediates in output' {i in Sectors}
@@ -250,6 +251,7 @@ param SHR_CON_CES 'CES consumption weights for each good in utility'
 #-----------labour
 param LAB_FLW_SUM {r in Regions}
   = sum{i in Sectors} RAW_LAB_FLW[r, i];
+#  = 1;
 param SHR_LAB 'labour weights for each sector in utility'
   {r in Regions, j in Sectors} = RAW_LAB_FLW[r, j] / LAB_FLW_SUM[r];
   #{r in Regions, j in Sectors} = RAW_LAB_FLW[r, j];
@@ -271,7 +273,7 @@ param SHR_MED_CES "sectoral share of i in j's CES intermediate aggregator"
     #= RAW_MED_FLW[r, i, j] ** (1 / EPS_INV);
 param SHR_LAB_CES "sectoral share of i in the CES labour aggregator"
   {r in Regions, i in Sectors}
-    = SHR_LAB[r, i];
+    = SHR_LAB[r, i] ** (- 1 / EPS_LAB);
 #-----------Armington share parameters
 param SHR_DOM_CCON 'domestic share in comp. consumption'
   {r in Regions, i in Sectors}
@@ -523,19 +525,19 @@ var adj_cost_kap_Q 'quadratic adjustment costs for kapital'
   = PHI_ADJ[i] * kap[r, i, t]
       * (kap[r, i, t + 1] / kap[r, i, t] - 1) ** 2;
 #-----------variety of production functions 
-#var E_out_CD 'Cobb--Douglas output transformation'
-#  {r in Regions, i in Sectors, t in LookForward}
-#  = E_shk[r, i, t] * A[i]
-#      * (kap[r, i, t] ** SHR_KAP_OUT[i] * lab[r, i, t] ** (1 - SHR_KAP_OUT[i]))
-#        ** SCALE_OUT;
-#var E_out_ATA 'Atalay output transformation'
-#  {r in Regions, i in Sectors, t in LookForward}
-#  = E_shk[r, i, t] * A[i] * (
-#    SHR_KAPLAB_OUT_CES[i]
-#      * (kap[r, i, t] ** SHR_KAP_OUT[i] * lab[r, i, t] ** SHR_LAB_OUT[i])
-#        ** RHO_OUT
-#    + SHR_MED_OUT_CES[i] * med_sec_CES[r, i, t] ** RHO_OUT
-#    ) ** (RHO_OUT_HAT * SCALE_OUT);
+var E_out_CD 'Cobb--Douglas output transformation'
+  {r in Regions, i in Sectors, t in LookForward}
+  = E_shk[r, i, t] * A[i]
+      * (kap[r, i, t] ** SHR_KAP_OUT[i] * lab[r, i, t] ** (1 - SHR_KAP_OUT[i]))
+        ** SCALE_OUT;
+var E_out_ATA 'Atalay output transformation'
+  {r in Regions, i in Sectors, t in LookForward}
+  = E_shk[r, i, t] * A[i] * (
+    SHR_KAPLAB_OUT_CES[i]
+      * (kap[r, i, t] ** SHR_KAP_OUT[i] * lab[r, i, t] ** SHR_LAB_OUT[i])
+        ** RHO_OUT
+    + SHR_MED_OUT_CES[i] * med_sec_CES[r, i, t] ** RHO_OUT
+    ) ** (RHO_OUT_HAT * SCALE_OUT);
 var E_out_CES 'Constant Elasticity of Substitution output transformation'
   {r in Regions, i in Sectors, t in LookForward}
   = E_shk[r, i, t] * A[i] * (
@@ -832,21 +834,20 @@ let PSup := 61;
 #------------------------------------------------------------------------------
 let ALPHA := 1;#271828182846e-11;
 let ALPHA_0 := 1;#271828182846e-11;
-let ALPHA := 171828182846e-11;
-let ALPHA_0 := 171828182846e-11;
+let ALPHA := 271828182846e-11;
+let ALPHA_0 := 271828182846e-11;
 let BETA := 950e-3;
 display A;
 param aA := 094e-2;
 param c20A := 090e-2;
 param c10A := 100e-2;
-#let A["O"] := 20e-2;
-#let A["R"] := 30e-2;
-#let A["P"] := 40e-2;
+let A["O"] := 20e-2;
+let A["R"] := 30e-2;
+let A["P"] := 40e-2;
 
 for {i in Sectors}{
   let DELTA[i] := 05e-2;
   let PHI_ADJ[i] := 300e-2;
-  let A[i] := 100e-2;
   };
 for {r in Regions, i in Sectors}{
   let KAP[r, i, PInf] := 1;

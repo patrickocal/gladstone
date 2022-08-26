@@ -1,4 +1,4 @@
-rm(list = ls())
+#rm(list = ls())
 library(rAMPL)
 # Create an AMPL instance
 ampl <- new(AMPL)
@@ -27,7 +27,7 @@ setparval <- function(parname, datadir="julia/output/"){
   colnames(df) = nom
   newdatadf <- read.csv(file = paste(datadir, parname, ".csv", sep=""))
   newdatadf[newdatadf < 0] <- 0
-  newdatadf[newdatadf == 0] = 1e-0
+  newdatadf[newdatadf == 0] = 1e-1
   newdatacol <- matrix(t(as.matrix(newdatadf[,-1])),
                        nrow=numrow, ncol=1,
                        byrow=TRUE)
@@ -55,7 +55,7 @@ setparval("RAW_LAB_FLW")
 setparval("RAW_MED_OUT")
 cat(sprintf("The data has been loaded."))
 
-stop("stopping here")
+stop("Ignore this error, all is well: just stopping here.")
 
 setparval("RAW_DOM_CINV")
 setparval("RAW_YSA_CINV")
