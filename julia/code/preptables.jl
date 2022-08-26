@@ -78,7 +78,7 @@ rename!(flows, :x22 => :S)
 rowCode = flows97[4:182,2];
 containsSpace = findall( x -> occursin(" ", x), rowCode);
 rowCode[containsSpace] = replace.(rowCode[containsSpace], " " => "");
-rowCodenumdiv = Array{Union{Nothing, String}}(nothing, length(rowCode));
+rowCodenumdiv = repeat(["div"], inner=length(rowCode), outer=1);
 for i in eachindex(rowCode);
     rowCodenumdiv[i] = Comm180Todiv[rowCode[i]];
 end
@@ -775,23 +775,9 @@ println("gfcfbiba has been normalised to match the gfcfioig total.");
 #  y[i, j] = anzdivgfcf[i] / gfcfioigtot * gfcfbiba[j]
 #end  
 
-#==============================================================================
-Make prior scaled from Aus Data
-==============================================================================#
-# Make vector of the proportion of each row sum element as a fraction of the 
-# total
-gfcfbibatot = sum(gfcfbiba);
-# In the initial prior, every column has the same cost structure
-ausprior = ones(numdiv, numdiv);
-for i in 1:numdiv
-    for j in 1:numdiv
-        ausprior[i,j] = gfcfioig[i] / gfcfioigtot;
-    end
-end
-
-#==============================================================================
-Make prior from US Data
-==============================================================================#
+#=============================================================================#
+# Prepare US data
+#=============================================================================#
 # Adding empty rows
 push!(flows, ["A" zeros(1, ncol(flows) - 1)])
 push!(flows, ["D" zeros(1, ncol(flows) - 1)])
@@ -807,40 +793,83 @@ sort!(flows)
 
 # Take column sum
 flowsTemp = deepcopy(flows);
-flowsColSum = sum(eachcol(select!(flowsTemp, Not(:Industry))));
+flowsColSum = sum(eachcol(flowsTemp[:, Not(:Industry)]));
 
-stop
 
 # Adding dwellings column
 #flows[!, :T] = flowsColSum *rowSumsProps[numdiv];
 
 # Adding public admin column
-flows[!, :O] = flowsColSum * ;
-
+colO = columnindex(anztable8rr[:, Not(:ANZdiv)], :O);
+flows[!, :O] = flowsColSum * gfcfbiba[colO] / gfcfioigtot;
 # Sorting columns
-flows = (flows[!, [:Industry, :A, :B, :C, :D, :E, :F, :G, :H, :I, :J, :K, :L, 
-    :M, :N, :O, :P, :Q, :R, :S,
- #   :T
-   ]])
+flows = permutedims(sort(permutedims(flows, 1), :Industry), 1);
+# write out us flows
+CSV.write(outputdir*"uskapflw.csv", flows);
 
-# Scale to Aus Data
-flowsTemp = deepcopy(flows);
-flowsTemp = select!(flowsTemp, Not(:Industry));
-flowsTempSum = sum(Matrix(flowsTemp));
-print(flowsTemp)
-for i in 1:ncol(flowsTemp)
-    for j in 1:nrow(flowsTemp)
-        flowsTemp[j,i] = flowsTemp[j,i] / flowsTempSum * gfcfbibatot;
-    end
+usrowsum = sum(eachcol(permutedims(flows, 1)[:, Not(:Industry)]));
+#=============================================================================# 
+# Back to Aus Data
+#=============================================================================# 
+ausshr = 80e-2
+# Make prior from Aus Data
+# Make vector of the proportion of each row sum element as a fraction of the 
+# total
+ausprior = deepcopy(flows)
+for j in range(1, numdiv)
+  # In the initial prior, every column has the same cost structure
+  ausprior[:, j + 1] = gfcfioig  / gfcfioigtot * ausshr;
+  # rescale us flows
+  flows[:, j + 1] .*= 1 / usrowsum[j] * (1 - ausshr);
 end
-print(flowsTemp)
-flowsTemp[!, :Industry] = flows.Industry
-flows = deepcopy(flowsTemp)
+# the new prior is the convex combination per ausshr
+ausprior[:, Not(:Industry)] .+= flows[:, Not(:Industry)];
+# now scale each column back up per gfcfbiba
+for i in range(1, numdiv)
+  ausprior[:, i + 1] .*= gfcfbiba[i];
+end;
 
-# Re -Sorting columns
-flows = (flows[!, [:Industry, :A, :B, :C, :D, :E, :F, :G, :H, :I, :J, :K, :L, 
-    :M, :N, :O, :P, :Q, :R, :S, :T]])
+
+raskap8 = Model(Ipopt.Optimizer);
+# Should be equal dimensions
+numcol = numdiv;
+numrow = numdiv;
+@variable(raskap8, x[1:numrow, 1:numcol] >= 0);
+set_start_value.(x, flows[:, Not(:Industry)]);
+# Max entropy objective (or min relative to uniform)
+eps = 050e-2;
+@NLobjective(raskap8,
+             Min,
+              (sum(sum((x[i, j] - ausprior[i, j + 1]) ^ 2
+                        for i in range(1, numrow)
+                      )
+                   for j in range(1, numcol)
+                  )
+               )
+            );
+tol = 1e+0;
+#------------------------------------------------------------------------------
+# the following are constraints for table 8
+#------------------------------------------------------------------------------
+# Col-sums constraint - must be equal to the IO totals
+for i in range(1, numrow)
+    @constraint(raskap8, sum(x[i,:]) <= gfcfioig[i] + tol);
+    @constraint(raskap8, sum(x[i,:]) >= gfcfioig[i] - tol);
+    #@constraint(raskap8, sum(x[i, :]) == 2 * x[i, end]);
+end;
+# Row-sums constraint - must be equal to the GFCF totals
+for j in range(1, numcol)
+    @constraint(raskap8, sum(x[:, j]) <= gfcfbiba[j] + tol);
+    @constraint(raskap8, sum(x[:, j]) >= gfcfbiba[j] - tol);
+    #@constraint(raskap8, sum(x[:, j]) == 2 * x[end, j]);
+end;
+
+optimize!(raskap8)
+
+rawsolkap8 = value.(x);
+solkap8 = deepcopy(flows)
+solkap8[:, Not(:Industry)] = rawsolkap8;
+println(pretty_table(solkap8, nosubheader=true, formatters=ft_round(1)));
 
 # Export tables as CSV
-CSV.write(outputdir*"capitalFlowsRAS2.csv", ySol2);
-CSV.write(outputdir*"UScapitalFlows.csv", flows);
+CSV.write(outputdir*"auskapflw8.csv", solkap8);
