@@ -10,7 +10,7 @@ else
 end
 datadir = "julia"*sep*"data"*sep
 #20 Sector to 4 Sector
-from20To4 = Dict(
+fromdivTo4 = Dict(
   "A"=> "Primary",
   "B" => "Primary",
   "C" => "Secondary",
@@ -30,7 +30,7 @@ from20To4 = Dict(
   "Q" => "Tertiary",
   "R" => "Tertiary",
   "S" => "Tertiary",
-  "T" => "Ownership"
+#  "T" => "Ownership"
  )
 
 #IOIG to 20 Sector
@@ -55,7 +55,7 @@ ANZSICDiv = ["Agriculture, Forestry and Fishing",
              "Health Care and Social Assistance",
              "Arts and Recreation Services",
              "Other Services",
-             "Ownership of Dwellings",
+#             "Ownership of Dwellings",
             ];
 ANZdiv = ["Agriculture, Forestry & Fishing",
                 "Mining",
@@ -76,22 +76,25 @@ ANZdiv = ["Agriculture, Forestry & Fishing",
                 "Health Care & Social Assistance",
                 "Arts & Recreation Services",
                 "Other Services",
-                "Ownership of Dwellings",
+#                "Ownership of Dwellings",
             ];
 ANZSICDivShort = ["AgrForestFish", "Mining", "Manufacturing", "Utilities",
                   "Construction", "Wholesale", "Retail", "AccomFoodServ",
                   "Transport&Ware", "Communications", "Finance&Insur",
                   "RealEstate", "BusinessServ", "Admin", "PublicAdminSafe",
                   "Education", "Health&Social", "Arts&Rec", "OtherServices",
-                  "Dwellings"];
-ANZcode =["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O",
-                    "P","Q","R","S", "T"];
-from20ToInd = Dict{String, Int64}();
+#                  "Dwellings"
+                 ];
+ANZcode =["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O", "P","Q",
+          "R","S",
+          # "T"
+         ];
+fromdivToInd = Dict{String, Int64}();
 for i in eachindex(ANZcode);
-    from20ToInd[ANZcode[i]] = Int(i);
+    fromdivToInd[ANZcode[i]] = Int(i);
 end
 
-function mapioig20(ioigcol)
+function mapioigdiv(ioigcol)
   tmpdct = Dict{Float64, String}();
   for i in [1:1:length(ioigcol);]
     test = ioigcol[i] / 100
@@ -117,7 +120,8 @@ function mapioig20(ioigcol)
           tmpdct[ioigcol[i]]="J"
       elseif 62 <= test < 66
           tmpdct[ioigcol[i]]="K"
-        elseif (66 <= test < 67 || 67.02 <= test < 69) #ownership of dwellings
+#        elseif (66 <= test < 67 || 67.02 <= test < 69) #ownership of dwellings
+      elseif (66 <= test < 69) # no ownership of dwellings
           tmpdct[ioigcol[i]]="L"
       elseif 69 <= test < 72
           tmpdct[ioigcol[i]]="M"
@@ -133,25 +137,25 @@ function mapioig20(ioigcol)
           tmpdct[ioigcol[i]]="R"
       elseif 94 <= test < 96
           tmpdct[ioigcol[i]]="S"
-      elseif 67 <= test < 67.02
-          tmpdct[ioigcol[i]]="T"
+#      elseif 67 <= test < 67.02 # ownership of dwellings
+#          tmpdct[ioigcol[i]]="T" # ownership of dwellings
       else
           print("ERROR: An input has fallen outside of the range of categories")
       end
   end
   return tmpdct
 end
-IOIGTo20 = mapioig20(IOIG)
-#ISIC 4.0 To 20 Sectors
+IOIGTodiv = mapioigdiv(IOIG)
+#ISIC 4.0 To div
 ANZSICISICSource = CSV.read(datadir*"ANZSIC06-ISIC3pt1.csv", DataFrame);
-ANZSIC20 = ANZSICISICSource[6:1484, 1][findall(x -> typeof(x)<:String15, ANZSICISICSource[6:1484, 4])];
+ANZSICdiv = ANZSICISICSource[6:1484, 1][findall(x -> typeof(x)<:String15, ANZSICISICSource[6:1484, 4])];
 ISIC = ANZSICISICSource[6:1484, 4][findall(x -> typeof(x)<:String15, ANZSICISICSource[6:1484, 4])];
 for i in eachindex(ISIC);
     ISIC[i]=strip(ISIC[i], ['p']);
 end
-ISICTo20 = Dict(ISIC .=> ANZSIC20);
+ISICTodiv = Dict(ISIC .=> ANZSICdiv);
 
-#NAIC2007 To 20 Sectors via ISIC 4.0
+#NAIC2007 To div via ISIC 4.0
 NAICSISICSource = ExcelReaders.readxlsheet(datadir*"2007_NAICS_to_ISIC_4.xls", "NAICS 07 to ISIC 4 technical");
 NAICS = string.(Int.(NAICSISICSource[4:1768,1]));
 ISICAsANZSIC = NAICSISICSource[4:1768,3];
@@ -159,35 +163,35 @@ ISICAsANZSIC = string.(ISICAsANZSIC);
 containsX = findall( x -> occursin("X", x), ISICAsANZSIC);
 ISICAsANZSIC[containsX] = replace.(ISICAsANZSIC[containsX], "X" => "1");
 ISICAsANZSIC = parse.(Float64, ISICAsANZSIC);
-NAICSANZSIC20 = string.(zeros(length(ISICAsANZSIC)));
+NAICSANZSICdiv = string.(zeros(length(ISICAsANZSIC)));
 for i in eachindex(ISICAsANZSIC);
-    NAICSANZSIC20[i] = ISICTo20[lpad(Int(ISICAsANZSIC[i]),4,"0")];
+    NAICSANZSICdiv[i] = ISICTodiv[lpad(Int(ISICAsANZSIC[i]),4,"0")];
 end
-NAICS07To20 = Dict(NAICS .=> NAICSANZSIC20);
+NAICS07Todiv = Dict(NAICS .=> NAICSANZSICdiv);
 
-#NAIC2002 To 20 Sectors via NAIC2007
+#NAIC2002 To div via NAIC2007
 NAICS02To07 = CSV.read(datadir*"2002_to_2007_NAICS.csv", DataFrame);
 NAICS02To0702 = string.(NAICS02To07[3:1202, 1]);
 NAICS02To0707 = string.(NAICS02To07[3:1202, 3]);
-NAICS07As20 = string.(zeros(length(NAICS02To0707)));
+NAICS07Asdiv = string.(zeros(length(NAICS02To0707)));
 for i in eachindex(NAICS02To0707);
-    NAICS07As20[i] = NAICS07To20[NAICS02To0707[i]];
+    NAICS07Asdiv[i] = NAICS07Todiv[NAICS02To0707[i]];
 end
-NAICS02To20 = Dict(NAICS02To0702 .=> NAICS07As20);
+NAICS02Todiv = Dict(NAICS02To0702 .=> NAICS07Asdiv);
 
-#NAIC1997 To 20 Sectors via NAIC2002
+#NAIC1997 To div via NAIC2002
 NAICS97To02 = CSV.read(datadir*"1997_NAICS_to_2002_NAICS.csv", DataFrame);
 NAICS97To0297 = string.(NAICS97To02[1:1355, 1]);
 NAICS97To0202 = string.(NAICS97To02[1:1355, 3]);
-NAICS02As20 = string.(zeros(length(NAICS97To0202)));
+NAICS02Asdiv = string.(zeros(length(NAICS97To0202)));
 for i in eachindex(NAICS97To0202);
-    NAICS02As20[i] = NAICS02To20[NAICS97To0202[i]];
+    NAICS02Asdiv[i] = NAICS02Todiv[NAICS97To0202[i]];
 end
-NAICS97To20 = Dict(NAICS97To0297 .=> NAICS02As20);
+NAICS97Todiv = Dict(NAICS97To0297 .=> NAICS02Asdiv);
 NAICS97To0297Trunc = first.(string.(NAICS97To02[1:1355, 1]),4);
-NAICS97To20Trunc = Dict(NAICS97To0297Trunc .=> NAICS02As20);
+NAICS97TodivTrunc = Dict(NAICS97To0297Trunc .=> NAICS02Asdiv);
 
-#Comm180 To 20 Sectors via NAIC 1997
+#Comm180 To div via NAIC 1997
 NAICS97ToComm180 = CSV.read(datadir*"NAICS_to_Comm180.csv", DataFrame);
 NAICS97ToComm18097 = first.([NAICS97ToComm180[1:90,4];NAICS97ToComm180[1:89,9]],4);
 containsStar = findall( x -> occursin("*", x), NAICS97ToComm18097);
@@ -199,17 +203,17 @@ containsStar = findall( x -> occursin("*", x), NAICS97ToComm180180);
 NAICS97ToComm180180[containsStar] = replace.(NAICS97ToComm180180[containsStar], "*" => "");
 containsSpace = findall( x -> occursin(" ", x), NAICS97ToComm180180);
 NAICS97ToComm180180[containsSpace] = replace.(NAICS97ToComm180180[containsSpace], " " => "");
-NAICS97As20 = string.(zeros(length(NAICS97ToComm18097)));
+NAICS97Asdiv = string.(zeros(length(NAICS97ToComm18097)));
 for i in eachindex(NAICS97ToComm18097);
     NAICS97ToComm18097[i] = rpad(parse(Int64, NAICS97ToComm18097[i]),4,"1");
 end
 Invalid4Dig = findall( x -> occursin("2311", x), NAICS97ToComm18097);
 NAICS97ToComm18097[Invalid4Dig].=["2331"];
 for i in eachindex(NAICS97ToComm18097);
-    NAICS97As20[i] = NAICS97To20Trunc[NAICS97ToComm18097[i]];
+    NAICS97Asdiv[i] = NAICS97TodivTrunc[NAICS97ToComm18097[i]];
 end
-Comm180To20=Dict(NAICS97ToComm180180 .=> NAICS97As20);
+Comm180Todiv=Dict(NAICS97ToComm180180 .=> NAICS97Asdiv);
 
 #Final concordance
-finalConcordance = [NAICS97ToComm180180 NAICS97As20];
-writedlm(datadir*"Comm180To20Concordance.csv", finalConcordance, ',');
+finalConcordance = [NAICS97ToComm180180 NAICS97Asdiv];
+writedlm(datadir*"Comm180TodivConcordance.csv", finalConcordance, ',');

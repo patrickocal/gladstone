@@ -34,7 +34,7 @@ for i in [1:1:179;]
     end
 end
 
-# Aggregating to "20" sectors
+# Aggregating to "numdiv" sectors
 # Combining all manufacturing into the same sector
 flows.x5 = flows.x5+flows.x6+flows.x7;
 flows = select!(flows, Not(:x6));
@@ -80,7 +80,7 @@ containsSpace = findall( x -> occursin(" ", x), rowCode);
 rowCode[containsSpace] = replace.(rowCode[containsSpace], " " => "");
 rowCodenumdiv = Array{Union{Nothing, String}}(nothing, length(rowCode));
 for i in eachindex(rowCode);
-    rowCodenumdiv[i] = Comm180To20[rowCode[i]];
+    rowCodenumdiv[i] = Comm180Todiv[rowCode[i]];
 end
 insertcols!(flows ,1, :Industry => rowCodenumdiv);
 splitIndustry = groupby(flows, :Industry);
@@ -275,7 +275,7 @@ function makeanztable(table, numsec=numioig)
   (# isolate ioig codes
    ioigcodes = string.(table.IOIG[1:numsec]);
    ioigcodesFloat = parse.(Float64, ioigcodes);
-   ioigtonumdiv = mapioig20(ioigcodesFloat);
+   ioigtonumdiv = mapioigdiv(ioigcodesFloat);
    tmp = String[];
    for i in eachindex(ioigcodesFloat)
      push!(tmp, ioigtonumdiv[ioigcodesFloat[i]])
@@ -337,7 +337,6 @@ anztable5rr = makerr(anztable5)
 anztablediffrr = makerr(anztablediff)
 CSV.write(outputdir * "anztable8rr.csv", anztable8rr)
 CSV.write(outputdir * "anztable5rr.csv", anztable5rr)
-stop
 # import regional data from remplan directory
 # what region?
 region = "glad"
@@ -387,17 +386,14 @@ function makebasiclq(raw, reg=region, ref=reference)
   df = innerjoin(tmp, df, on = "ANZdiv")
   sort!(df)
   print(df)
+  refgrowth = (df[end, ref] - anztable8[end, "T4"]) / anztable8[end, "T4"];
   ((anztable8[numdiv, 1] == "T") & (df[5, 1] == "E") & (anztable8[5, 1] == "E")
-   ? (refgrowth = (df[end, ref]
-                   - anztable8[end, "T4"]) / anztable8[end, "T4"];
-      aggregshr = df[end, reg] / df[end, ref];
+   ? (aggregshr = df[end, reg] / df[end, ref];
       Erefshr = anztable8[end, "E"] / anztable8[end, "T4"]; 
       Trefshr = anztable8[end, "T"] / anztable8[end, "T4"];
       origEval = Vector(df[5, Cols(reg, ref)]);
-      df[5, Cols(reg, ref)] = (Erefshr / (Erefshr + Trefshr)
-                                    * origEval);
-      df[end, Cols(reg, ref)] = (Trefshr / (Erefshr + Trefshr)
-                                      * origEval);
+      df[5, Cols(reg, ref)] = (Erefshr / (Erefshr + Trefshr) * origEval);
+      df[end, Cols(reg, ref)] = (Trefshr / (Erefshr + Trefshr) * origEval);
      )
    : println("check anztable8 E and T are not in place")
   )
@@ -405,7 +401,7 @@ function makebasiclq(raw, reg=region, ref=reference)
 end;
 labpersec = makebasiclq(labpersecraw)[1];
 # save regional labour to julia output folder as csv in ampl-ready form
-CSV.write(outputdir*"RAW_LAB_FLW.csv", labpersec[1:20, [1, 3]]);
+CSV.write(outputdir*"RAW_LAB_FLW.csv", labpersec[1:numdiv, [1, 3]]);
 labpersec = makebasiclq(outpersecraw)[1];
 (outpersec, outgrowth) = makebasiclq(outpersecraw);
 # more regional data
@@ -524,7 +520,7 @@ rho = round(1 + 1 / eps);
 rhohat = 1 / rho;
 @NLobjective(ras5,
              Max,
-             - 1e-0 * (sum(sum(shr[i, j] * (x[i, j] - table[i, j]) ^ rho
+             - 1e-8 * (sum(sum(shr[i, j] * (x[i, j] - table[i, j]) ^ rho
                         for i in range(1, numrow)
                        ) ^ (rhohat * 12)
                     for j in range(1, numcol)

@@ -764,9 +764,9 @@ subject to market_clearing 'market clearing for each sector and time'
 The_data section
 =============================================================================*/
 data;
-#-----------1x20 model
+#-----------1xANZdiv model
 set Regions := GLD;
-set Sectors := A B C D E F G H I J K L M N O P Q R S T;
+set Sectors := A B C D E F G H I J K L M N O P Q R S;
 #set Sectors := Agrc Frst;
 #-----------2x2 model
 #set Regions := GLD RoQ;

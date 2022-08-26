@@ -13,6 +13,8 @@ outputdir = "julia/output/"
 div = "ANZdiv"
 tbl8 = "anztable8rr"
 tbl5 = "anztable5rr"
+tbl8 = "newtable8"
+tbl5 = "newtable5"
 # Pull in tables from .csv files, ultimately it will come from the RAS code
 newtable8 = CSV.read(outputdir * tbl8 * ".csv", DataFrame)
 newtable5 = CSV.read(outputdir * tbl5 * ".csv", DataFrame)
@@ -91,7 +93,7 @@ CSV.write(outputdir*"RAW_LAB_OUT.csv", permutedims(
     getSubFrame(newtable8, ["`P1"], sectorCodes),1));
 
 # RAW_MED_OUT - all sectors in the T1 row of table 8 (maybe use sum instead)
-T1vec = vec(sum(Matrix(newtable8[1:numdiv, Between("A", "T")]), dims=1));
+T1vec = vec(sum(Matrix(newtable8[1:numdiv, 2:numdiv+1]), dims=1));
 T1 = DataFrame("ANZdiv" => sectorCodes, "T1" =>  T1vec);
 CSV.write(outputdir*"RAW_MED_OUT.csv", T1);
 

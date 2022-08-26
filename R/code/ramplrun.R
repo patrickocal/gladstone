@@ -36,9 +36,8 @@ setparval <- function(parname, datadir="julia/output/"){
   return
 }
 cat(sprintf("Loading the data. "))
-# basic
+# basic ex investment flows
 setparval("RAW_CON_FLW")# "raw consumption flows: table8"
-setparval("RAW_INV_FLW")# "raw investment flows: tablekapflw"
 setparval("RAW_MED_FLW")
 # output
 setparval("RAW_KAP_OUT")
@@ -53,6 +52,8 @@ setparval("RAW_EXO_JOUT")
 setparval("RAW_DOM_JOUT")
 setparval("RAW_LAB_FLW")
 setparval("RAW_MED_OUT")
+# investment flows from tablekapflw
+setparval("RAW_INV_FLW")
 cat(sprintf("The data has been loaded."))
 
 stop("Ignore this error, all is well: just stopping here.")
