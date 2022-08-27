@@ -78,12 +78,12 @@ rename!(flows, :x22 => :S)
 rowCode = flows97[4:182,2];
 containsSpace = findall( x -> occursin(" ", x), rowCode);
 rowCode[containsSpace] = replace.(rowCode[containsSpace], " " => "");
-rowCodenumdiv = repeat(["div"], inner=length(rowCode), outer=1);
+rowCodediv = repeat(["div"], inner=length(rowCode), outer=1);
 for i in eachindex(rowCode);
-    rowCodenumdiv[i] = Comm180Todiv[rowCode[i]];
+    rowCodediv[i] = Comm180Todiv[rowCode[i]];
 end
-insertcols!(flows ,1, :Industry => rowCodenumdiv);
-splitIndustry = groupby(flows, :Industry);
+insertcols!(flows ,1, :ANZcode => rowCodediv);
+splitIndustry = groupby(flows, :ANZcode);
 flows = combine(splitIndustry, valuecols(splitIndustry) .=> sum);
 
 rename!(flows, :A_sum => :A)
@@ -238,7 +238,7 @@ end
 # map ioig to ANZSICnumdiv
 # the following function is impure in that it depends on dicts and functions ..
 # in concordance.jl
-function makeanztable(table, numsec=numioig)
+function makeaustable(table, numsec=numioig)
   # create a many-to-one column: anzcode per ioig
   (# isolate ioig codes
    ioigcodes = string.(table.IOIG[1:numsec]);
@@ -255,60 +255,60 @@ function makeanztable(table, numsec=numioig)
   anzperioigcol = tmp;
   )
   # collapse rows
-  (anztable = table;
-   insertcols!(anztable, 1, "ANZdiv" => anzperioigcol);
-   anztable = (combine(groupby(anztable, :ANZdiv),
+  (austable = table;
+   insertcols!(austable, 1, "ANZcode" => anzperioigcol);
+   austable = (combine(groupby(austable, :ANZcode),
                         names(table, Between(:IOIG0101, :T6))
                           .=> sum .=> Between(:IOIG0101, :T6))
                );
-   sort!(anztable);
+   sort!(austable);
   )
   # collapse cols
-  (tmptable = transpose(Matrix(anztable[:, 2 : numioig + 1]));
+  (tmptable = transpose(Matrix(austable[:, 2 : numioig + 1]));
    tmptable = DataFrame(tmptable, :auto);
-   insertcols!(tmptable, 1, "ANZdiv" => anzperioigcol[1:numioig]);
-   tmptable = combine(groupby(tmptable, :ANZdiv), Not(1) .=> sum);
+   insertcols!(tmptable, 1, "ANZcode" => anzperioigcol[1:numioig]);
+   tmptable = combine(groupby(tmptable, :ANZcode), Not(1) .=> sum);
    sort!(tmptable);
    tmptablet = transpose(Matrix(tmptable[:, Not(1)]));
    tmptablet = DataFrame(tmptablet, ANZcode);
-   insertcols!(tmptablet, 1, "ANZdiv" => anztable[:,1]);
-   anztable = anztable[:, Not(names(anztable, Between(:IOIG0101, :IOIG9502)))];
-   anztable = innerjoin(tmptablet, anztable, on = :ANZdiv);
+   insertcols!(tmptablet, 1, "ANZcode" => austable[:,1]);
+   austable = austable[:, Not(names(austable, Between(:IOIG0101, :IOIG9502)))];
+   austable = innerjoin(tmptablet, austable, on = :ANZcode);
   )
-  return anztable
+  return austable
 end
-anztable8 = makeanztable(table8);
-anztable5 = makeanztable(table5);
-(anztablediff, anznegvals, anzposdiffP6) = makediff(anztable8, anztable5);
+austable8 = makeaustable(table8);
+austable5 = makeaustable(table5);
+(austablediff, anznegvals, anzposdiffP6) = makediff(austable8, austable5);
 
 #==============================================================================
 regionalise tables
 ==============================================================================#
 #make the io tables ras-ready
-#table = anztable8
+#table = austable8
 function makerr(table)
-  gvarow = findfirst(occursin.("T2", table.ANZdiv));
-  t1row = findfirst(occursin.("T1", table.ANZdiv));
-  p5row = findfirst(occursin.("P5", table.ANZdiv));
+  gvarow = findfirst(occursin.("T2", table.ANZcode));
+  t1row = findfirst(occursin.("T1", table.ANZcode));
+  p5row = findfirst(occursin.("P5", table.ANZcode));
   table = table[Not(gvarow, t1row), :];
   table.Q3 += table.Q6;
   table.Q6 .= 0;
   table.Q4 += table.Q5;
   table.Q5 .= 0;
   table = table[:, Not([:T4, :T5])];
-  #table[:, Not(:ANZdiv)] = round.(table[:, Not(:ANZdiv)]);
+  #table[:, Not(:ANZcode)] = round.(table[:, Not(:ANZcode)]);
   rename!(table, :Q4 => "Q4");
   return table
 end 
-anztable8rr = makerr(anztable8)
-anztable5rr = makerr(anztable5)
-anztablediffrr = makerr(anztablediff)
-CSV.write(outputdir * "anztable8rr.csv", anztable8rr)
-CSV.write(outputdir * "anztable5rr.csv", anztable5rr)
+austable8rr = makerr(austable8)
+austable5rr = makerr(austable5)
+austablediffrr = makerr(austablediff)
+CSV.write(outputdir * "austable8rr.csv", austable8rr)
+CSV.write(outputdir * "austable5rr.csv", austable5rr)
 # import regional data from remplan directory
 # what region?
-region = "glad"
-reference = "au"
+region = "GLD"
+reference = "AUS"
 source = "remplan"
 #source = "john"
 dir = datadir*source*sep
@@ -349,27 +349,27 @@ function makebasiclq(raw, reg=region, ref=reference)
        df[1:end, 2:end] = Matrix(df[1:end, 2:end]) / 1e+6;
       );
   );
-  df[end, 1] = "Ownership of Dwellings"
+#  df[end, 1] = "Ownership of Dwellings"
   tmp = DataFrame("ANZcode" => ANZcode, "ANZdiv" => ANZdiv)
   df = innerjoin(tmp, df, on = "ANZdiv")
   sort!(df)
   print(df)
-  refgrowth = (df[end, ref] - anztable8[end, "T4"]) / anztable8[end, "T4"];
-  ((anztable8[numdiv, 1] == "T") & (df[5, 1] == "E") & (anztable8[5, 1] == "E")
+  refgrowth = (df[end, ref] - austable8[end, "T4"]) / austable8[end, "T4"];
+  ((austable8[numdiv, 1] == "T") & (df[5, 1] == "E") & (austable8[5, 1] == "E")
    ? (aggregshr = df[end, reg] / df[end, ref];
-      Erefshr = anztable8[end, "E"] / anztable8[end, "T4"]; 
-      Trefshr = anztable8[end, "T"] / anztable8[end, "T4"];
+      Erefshr = austable8[end, "E"] / austable8[end, "T4"]; 
+      Trefshr = austable8[end, "T"] / austable8[end, "T4"];
       origEval = Vector(df[5, Cols(reg, ref)]);
       df[5, Cols(reg, ref)] = (Erefshr / (Erefshr + Trefshr) * origEval);
       df[end, Cols(reg, ref)] = (Trefshr / (Erefshr + Trefshr) * origEval);
      )
-   : println("check anztable8 E and T are not in place")
+   : println("check austable8 E and T are not in place")
   )
   return (df, refgrowth)
 end;
 labpersec = makebasiclq(labpersecraw)[1];
 # save regional labour to julia output folder as csv in ampl-ready form
-CSV.write(outputdir*"RAW_LAB_FLW.csv", labpersec[1:numdiv, [1, 3]]);
+CSV.write(outputdir * "labsecreg.csv", labpersec[1:numdiv, [1, 3, 4]]);
 labpersec = makebasiclq(outpersecraw)[1];
 (outpersec, outgrowth) = makebasiclq(outpersecraw);
 # more regional data
@@ -385,14 +385,14 @@ labpersec = makebasiclq(outpersecraw)[1];
      = abs.(Vector(grxgrp[1:9, rng])) / 1e+6);
    )
 );
-(p1aggshrgva = anztable8[numdiv+1, end]
- / sum(anztable8[[numdiv+1, numdiv+2, numdiv+4], end]));
-(p2aggshrgva = anztable8[numdiv+2, end]
- / sum(anztable8[[numdiv+1, numdiv+2, numdiv+4], end]));
-(p4aggshrgva = anztable8[numdiv+4, end]
- / sum(anztable8[[numdiv+1, numdiv+2, numdiv+4], end]));
-(p4aggshrgvanetsal = anztable8[numdiv+4, end]
- / sum(anztable8[[numdiv+2, numdiv+4], end]));
+(p1aggshrgva = austable8[numdiv+1, end]
+ / sum(austable8[[numdiv+1, numdiv+2, numdiv+4], end]));
+(p2aggshrgva = austable8[numdiv+2, end]
+ / sum(austable8[[numdiv+1, numdiv+2, numdiv+4], end]));
+(p4aggshrgva = austable8[numdiv+4, end]
+ / sum(austable8[[numdiv+1, numdiv+2, numdiv+4], end]));
+(p4aggshrgvanetsal = austable8[numdiv+4, end]
+ / sum(austable8[[numdiv+2, numdiv+4], end]));
 # make P1 to P6
 p = zeros(6, 2);
 (source == "remplan"
@@ -400,13 +400,13 @@ p = zeros(6, 2);
     p[2, :] = (gvapersecraw[end, rng]
                - salpersecraw[end, rng]) * (1 - p4aggshrgvanetsal) / 1e+6;
     p[3, :] = (outpersecraw[end, rng]
-               * anztable8[numdiv+3, end] / anztable8[end-2, end]) / 1e+6;
+               * austable8[numdiv+3, end] / austable8[end-2, end]) / 1e+6;
     p[4, :] = (gvapersecraw[end, rng]
                - salpersecraw[end, rng]) * p4aggshrgvanetsal / 1e+6;
    )
  : (for i in range(1, 4)
       p[i, :] = (outpersecraw[end, rng]
-                 * anztable8[numdiv+i, end] / anztable8[end-2, end]) / 1e+6;
+                 * austable8[numdiv+i, end] / austable8[end-2, end]) / 1e+6;
     end
    )
 );
@@ -417,7 +417,7 @@ q = zeros(7, 2);
 q[[1, 2, 3, 4, 7], :] = Matrix(grxgrp[[1, 2, 3, 4, 6], rng]);
 q[5, :] = zeros(2);
 aggoutlq = outpersecraw[end, 2] / outpersecraw[end, 3];
-q[6, :] = 0 * anztable8[end, "Q6"] * [aggoutlq , 1];
+q[6, :] = 0 * austable8[end, "Q6"] * [aggoutlq , 1];
 
 gap = sum(q, dims=1) - sum(p, dims=1);
 gapgvadbn = p[[1, 2, 4], :] / sum(p[[1, 2, 4], :], dims=1) .* gap;
@@ -425,7 +425,7 @@ p[[1, 2, 4], :] = p[[1, 2, 4], :] + gapgvadbn;
 outperdiv = outpersec;
 outpersec = outpersec[:, Not("ANZdiv")];
 for i in range(1, 6)
-  push!(outpersec, [anztable8[numdiv + i, 1] p[i, 1] p[i, 2]])
+  push!(outpersec, [austable8[numdiv + i, 1] p[i, 1] p[i, 2]])
 end;
 labperdiv = labpersec;
 labpersec = labpersec[:, Not("ANZdiv")];
@@ -440,12 +440,12 @@ println(sum(labpersec[:, 3]) - sum(outpersec[:, 3]));
 #==============================================================================
 RAS
 ==============================================================================#
-numrow = size(anztable8rr, 1) - 1;
-Q7col = columnindex(anztable8rr, "Q7");
-Acol = columnindex(anztable8rr, "A");
-numcol = size(anztable8rr, 2) - 2; 
-newrowtot = anztable8rr[end, Between("A", "Q7")];
-newcoltot = anztable8rr[1:numrow, end];
+numrow = size(austable8rr, 1) - 1;
+Q7col = columnindex(austable8rr, "Q7");
+Acol = columnindex(austable8rr, "A");
+numcol = size(austable8rr, 2) - 2; 
+newrowtot = austable8rr[end, Between("A", "Q7")];
+newcoltot = austable8rr[1:numrow, end];
 newrowtot = labpersec[1:numcol, 2];
 newcoltot = outpersec[1:numrow, 2];
 
@@ -453,7 +453,7 @@ newcoltot = outpersec[1:numrow, 2];
 tn = "5";
 # make sure we have a valid table and, if so, set it
 println("Table ", tn, " coming up.");
-table5origdf = anztable5rr[:, Between("A", "T6")];
+table5origdf = austable5rr[:, Between("A", "T6")];
 tabledf = deepcopy(table5origdf);
 for i in range(1, numrow)
   tabledf[i, "T6"] = newcoltot[i];
@@ -563,8 +563,8 @@ println(rowerr')
 println(colerr')
 sol5 = DataFrame(rawsol5, names(tabledf));
 #insertcols!(sol, numcol + 1, :T6 => newcoltot);
-insertcols!(sol5, 1, :ANZdiv => anztable8rr[:, 1]);
-#push!(sol, [anztable5rr[end, 1] newrowtot' sum(newrowtot)]);
+insertcols!(sol5, 1, :ANZcode => austable8rr[:, 1]);
+#push!(sol, [austable5rr[end, 1] newrowtot' sum(newrowtot)]);
 println("and the new table", tn, " is:")
 print(pretty_table(sol5, nosubheader=true, formatters=ft_round(1)));
 # Export tables as CSV
@@ -576,7 +576,7 @@ CSV.write(outputdir*"newtable"*tn*".csv", sol5);
 tn = "8";
 # make sure we have a valid table and, if so, set it
 println("Table ", tn, " coming up.");
-table8origdf = anztable8rr[:, Between("A", "T6")];
+table8origdf = austable8rr[:, Between("A", "T6")];
 tabledf = deepcopy(table8origdf);
 for i in range(1, numrow)
   tabledf[i, "T6"] = newcoltot[i];
@@ -701,8 +701,8 @@ println("and the error (diff between rowsum and colsum) is: ")
 println(err')
 sol8 = DataFrame(rawsol8, names(tabledf));
 #insertcols!(sol, numcol + 1, :T6 => newcoltot);
-insertcols!(sol8, 1, :ANZdiv => anztable8rr[:, 1]);
-#push!(sol, [anztable5rr[end, 1] newrowtot' sum(newrowtot)]);
+insertcols!(sol8, 1, :ANZcode => austable8rr[:, 1]);
+#push!(sol, [austable5rr[end, 1] newrowtot' sum(newrowtot)]);
 println("and the new table", tn, " is:")
 println(pretty_table(sol8, nosubheader=true, formatters=ft_round(1)));
 # Export tables as CSV
@@ -717,8 +717,8 @@ println(pretty_table(soldiff, nosubheader=true, formatters=ft_round(1)));
 kapital ras prep
 ==============================================================================#
 #table 8
-gfcfioig = (anztable8rr[1:numdiv, :Q3]
-            + anztable8rr[1:numdiv, :Q4] + anztable8rr[1:numdiv, :Q5]);
+gfcfioig = (austable8rr[1:numdiv, :Q3]
+            + austable8rr[1:numdiv, :Q4] + austable8rr[1:numdiv, :Q5]);
 gfcfioigtot = sum(gfcfioig)
 #==============================================================================
 Aggregate GFCF data
@@ -793,21 +793,21 @@ sort!(flows)
 
 # Take column sum
 flowsTemp = deepcopy(flows);
-flowsColSum = sum(eachcol(flowsTemp[:, Not(:Industry)]));
+flowsColSum = sum(eachcol(flowsTemp[:, Not(:ANZcode)]));
 
 
 # Adding dwellings column
 #flows[!, :T] = flowsColSum *rowSumsProps[numdiv];
 
 # Adding public admin column
-colO = columnindex(anztable8rr[:, Not(:ANZdiv)], :O);
+colO = columnindex(austable8rr[:, Not(:ANZcode)], :O);
 flows[!, :O] = flowsColSum * gfcfbiba[colO] / gfcfioigtot;
 # Sorting columns
-flows = permutedims(sort(permutedims(flows, 1), :Industry), 1);
+flows = permutedims(sort(permutedims(flows, 1), :ANZcode), 1);
 # write out us flows
 CSV.write(outputdir*"uskapflw.csv", flows);
 
-usrowsum = sum(eachcol(permutedims(flows, 1)[:, Not(:Industry)]));
+usrowsum = sum(eachcol(permutedims(flows, 1)[:, Not(:ANZcode)]));
 #=============================================================================# 
 # Back to Aus Data
 #=============================================================================# 
@@ -823,7 +823,7 @@ for j in range(1, numdiv)
   flows[:, j + 1] .*= 1 / usrowsum[j] * (1 - ausshr);
 end
 # the new prior is the convex combination per ausshr
-ausprior[:, Not(:Industry)] .+= flows[:, Not(:Industry)];
+ausprior[:, Not(:ANZcode)] .+= flows[:, Not(:ANZcode)];
 # now scale each column back up per gfcfbiba
 for i in range(1, numdiv)
   ausprior[:, i + 1] .*= gfcfbiba[i];
@@ -835,17 +835,17 @@ raskap8 = Model(Ipopt.Optimizer);
 numcol = numdiv;
 numrow = numdiv;
 @variable(raskap8, x[1:numrow, 1:numcol] >= 0);
-set_start_value.(x, flows[:, Not(:Industry)]);
+set_start_value.(x, flows[:, Not(:ANZcode)]);
 # Max entropy objective (or min relative to uniform)
 eps = 050e-2;
 @NLobjective(raskap8,
              Min,
-              (sum(sum((x[i, j] - ausprior[i, j + 1]) ^ 2
-                        for i in range(1, numrow)
-                      )
-                   for j in range(1, numcol)
-                  )
-               )
+             (sum(sum((x[i, j] - ausprior[i, j + 1]) ^ 2
+                      for i in range(1, numrow)
+                     )
+                  for j in range(1, numcol)
+                 )
+             )
             );
 tol = 1e+0;
 #------------------------------------------------------------------------------
@@ -868,8 +868,46 @@ optimize!(raskap8)
 
 rawsolkap8 = value.(x);
 solkap8 = deepcopy(flows)
-solkap8[:, Not(:Industry)] = rawsolkap8;
+solkap8[:, Not(:ANZcode)] = rawsolkap8;
 println(pretty_table(solkap8, nosubheader=true, formatters=ft_round(1)));
+CSV.write(outputdir * "auskapflw8.csv", solkap8);
 
+#------------------------------------------------------------------------------
+# regional kapital
+#------------------------------------------------------------------------------
+rasregkap8 = Model(Ipopt.Optimizer);
+@variable(rasregkap8, x[1:numrow, 1:numcol] >= 0);
+set_start_value.(x[1:numrow], solkap8[1:numrow, Not(:ANZcode)]);
+@NLobjective(rasregkap8,
+             Min,
+             sum(sum((x[i, j] - solkap8[i, j + 1]) ^ 2
+                     for i in range(1, numrow)
+                    ) ^ 2
+                 for j in range(1, numcol)
+                )
+            );
+regcolsum = sol8[1:numrow, :Q3] + sol8[1:numrow, :Q4];
+regcolsumtot = sum(regcolsum);
+regrowsum = gfcfbiba * regcolsumtot / gfcfbibatot;
+# Col-sums constraint - must be equal to the IO totals
+for i in range(1, numrow)
+  @constraint(rasregkap8, sum(x[i, :]) <= regcolsum[i] + tol);
+  @constraint(rasregkap8, sum(x[i, :]) >= regcolsum[i] - tol);
+end; 
+# Row-sums constraint - must be equal to the GFCF totals
+for j in range(1, numcol)
+  @constraint(rasregkap8, sum(x[:, j]) <= regrowsum[j] + tol);
+  @constraint(rasregkap8, sum(x[:, j]) >= regrowsum[j] - tol);
+    #@constraint(raskap8, sum(x[:, j]) == 2 * x[end, j]);
+end;
+
+optimize!(rasregkap8)
+
+rawsolregkap8 = value.(x);
+solregkap8 = deepcopy(flows)
+solregkap8[:, Not(:ANZcode)] = rawsolregkap8[1:numrow, :];
+insertcols!(solregkap8, ncol(solregkap8) + 1, :T8 => regcolsum)
+push!(solregkap8, ["T7" regrowsum' regcolsumtot])
+println(pretty_table(solregkap8, nosubheader=true, formatters=ft_round(1)));
 # Export tables as CSV
-CSV.write(outputdir*"auskapflw8.csv", solkap8);
+CSV.write(outputdir*"regkapflw8.csv", solregkap8);

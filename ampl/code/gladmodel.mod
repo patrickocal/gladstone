@@ -135,7 +135,7 @@ param RAW_CON_FLW "raw consumption flows: table8Q1"
 param RAW_INV_FLW "raw investment flows: tablekapflw"
   {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
-param RAW_LAB_FLW  "raw number of workers: abs"
+param REG_LAB  "raw number of workers: abs"
   {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_MED_FLW "raw intermediate flows: table8"
@@ -249,10 +249,10 @@ param SHR_CON_CES 'CES consumption weights for each good in utility'
     = (RAW_CON_FLW[r, i] / CON_FLW_SUM[r]) ** (1 / EPS_CON);
 #-----------labour
 param LAB_FLW_SUM {r in Regions}
-  = sum{i in Sectors} RAW_LAB_FLW[r, i];
+  = sum{i in Sectors} REG_LAB[r, i];
 param SHR_LAB 'labour weights for each sector in utility'
-  {r in Regions, j in Sectors} = RAW_LAB_FLW[r, j] / LAB_FLW_SUM[r];
-  #{r in Regions, j in Sectors} = RAW_LAB_FLW[r, j];
+  {r in Regions, j in Sectors} = REG_LAB[r, j] / LAB_FLW_SUM[r];
+  #{r in Regions, j in Sectors} = REG_LAB[r, j];
 #-----------inputs of sector i into j's investment).
 param INV_FLW_RSUM {r in Regions, j in Sectors} 
   = sum{i in Sectors} RAW_INV_FLW[r, i, j];
@@ -763,6 +763,7 @@ subject to market_clearing 'market clearing for each sector and time'
 /*=============================================================================
 The_data section
 =============================================================================*/
+param datadir symbolic; #"the directory where parameter-input data is stored" symbolic;
 data;
 #-----------1xANZdiv model
 set Regions := GLD;
@@ -822,6 +823,22 @@ set Sectors := A B C D E F G H I J K L M N O P Q R S;
 #set Sectors := A B C D E F G H I J K L M N O P Q R T U
 #  A1 B1 C1 D1 E1 F1 G1 H1 I1 J1 K1 L1 M1 N1 O1 P1 Q1 R1 T1 U1
 #  A2 B2 C2 D2 E2 F2 G2 H2 I2 J2 K2 L2 M2 N2 O2 P2 Q2 R2 T2 U2;
+#=============================================================================#
+# read in the data
+#=============================================================================#
+let datadir := "julia/output/";
+table rmf IN "amplcsv" (datadir & "RAW_MED_FLW.csv"):
+  [index0, index1, index2], RAW_MED_FLW;
+read table rmf;
+table rif IN "amplcsv" (datadir & "RAW_INV_FLW.csv"):
+  [index0, index1, index2], RAW_INV_FLW;
+read table rif;
+table rcf IN "amplcsv" (datadir & "RAW_CON_FLW.csv"):
+  [index0, index1], RAW_CON_FLW;
+read table rcf;
+table rl IN "amplcsv" (datadir & "REG_LAB.csv"):
+  [index0, index1], REG_LAB;
+read table rl;
 #------------------------------------------------------------------------------
 #-----------set the horizon and length of paths
 #------------------------------------------------------------------------------
