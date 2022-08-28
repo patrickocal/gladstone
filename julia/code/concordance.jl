@@ -100,9 +100,9 @@ function mapioigdiv(ioigcol)
     test = ioigcol[i] / 100
       if 1 <= test < 6
           tmpdct[ioigcol[i]]="A"
-      elseif 6 <= test < 10
+      elseif 6 <= test < 11
           tmpdct[ioigcol[i]]="B"
-      elseif 10 <= test < 26
+      elseif 11 <= test < 26
           tmpdct[ioigcol[i]]="C"
       elseif 26 <= test < 30
           tmpdct[ioigcol[i]]="D"

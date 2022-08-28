@@ -94,7 +94,7 @@ for {s in PathTimes}{
 #-----------Euler integrand for CES production
     let EULER_INTEGRAND[r, i, s] := DUAL_KAP[r, i, s] * (1 - DELTA[i]) 
       + DUAL_MKT_CLR[i, s] * (
-        SHR_KAP_OUT_CES[i] * LAB_EXT[r, i, s] ** RHO_OUT
+        SHR_KAP_OUT_CES[r, i] * LAB_EXT[r, i, s] ** RHO_OUT
           * KAP[r, i, s] ** (RHO_OUT - 1)
         * SCALE_OUT * A[i] * SHR_DOM[r, i, s]
           * (DOM[r, i, s] / (A[i] * SHR_DOM[r, i, s]))

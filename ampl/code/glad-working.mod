@@ -931,8 +931,8 @@ let A_LAB_EXT := -0145e-2;
 #let A_CMED := 1;
 let TAIL_SHR_CON := 045e-2;
 
-let EPS_INV := 0700e-3;
-let EPS_MED := 0860e-3;
+let EPS_INV := 0200e-3;
+let EPS_MED := 0260e-3;
 let EPS_CON := 0999e-3;
 let EPS_OUT := 0800e-3;
 

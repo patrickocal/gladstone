@@ -303,8 +303,15 @@ end
 austable8rr = makerr(austable8)
 austable5rr = makerr(austable5)
 austablediffrr = makerr(austablediff)
+# Export tables as CSV
 CSV.write(outputdir * "austable8rr.csv", austable8rr)
 CSV.write(outputdir * "austable5rr.csv", austable5rr)
+for i in range(1, numdiv)
+  for j in range(1, numdiv + 2)
+    (austablediffrr[i, j + 1] < 0) && (austablediffrr[i, j + 1] = 0);
+  end
+end;
+CSV.write(outputdir * "austablediffrr.csv", austablediffrr);
 # import regional data from remplan directory
 # what region?
 region = "GLD"
@@ -472,7 +479,8 @@ table = Matrix(tabledf[:, Between("A", "T6")])
 # instantiate an optimisation problem
 ras5 = Model(Ipopt.Optimizer);
 # Should be equal dimensions
-@variable(ras5, x[1:numrow+1, 1:numcol+1]);
+lbx = 1e-1
+@variable(ras5, x[1:numrow+1, 1:numcol+1] >= lbx);
 set_start_value.(x, table)
 # Max entropy objective (or min relative to uniform)
 eps = 050e-2;
@@ -524,7 +532,7 @@ for j in range(1, numcol)
                                    )
                );
 end;
-@constraint(ras5, x[rowP6, colQ7] == 0);
+@constraint(ras5, x[rowP6, colQ7] == lbx);
 for j in range(1, numdiv)
     q1tableshr = table5origdf[j, :Q1] / sum(table5origdf[1:numdiv, :Q1])
     @constraint(ras5, x[j, colQ1] ==  q1tableshr * sum(x[1:numdiv, colQ1]));
@@ -535,7 +543,7 @@ colC = columnindex(tabledf, :C);
 #@constraint(ras5, x[numdiv+4, colC] == -100);
 for i in range(1, numrow)
   for j in range(1, numcol)
-    (table[i, j] == 0 && @constraint(ras5, x[i, j] == 0)
+    (table[i, j] == 0 && @constraint(ras5, x[i, j] == lbx)
     );
     (table[i, j] > 0 && @constraint(ras5, x[i, j]
                                     >= tol * rand(MersenneTwister(i + j)))
@@ -595,7 +603,7 @@ table = Matrix(tabledf[:, Between("A", "T6")])
 # instantiate an optimisation problem
 ras8 = Model(Ipopt.Optimizer);
 # Should be equal dimensions
-@variable(ras8, x[1:numrow+1, 1:numcol+1]);
+@variable(ras8, x[1:numrow+1, 1:numcol+1] >= lbx);
 set_start_value.(x, table)
 # Max entropy objective (or min relative to uniform)
 eps = 050e-2;
@@ -646,7 +654,7 @@ end;
 #@constraint(ras8, x[numdiv+4, colC] == -100);
 for i in range(1, numrow)
   for j in range(1, numcol)
-    (table[i, j] == 0 && @constraint(ras8, x[i, j] == 0)
+    (table[i, j] == 0 && @constraint(ras8, x[i, j] == lbx)
     );
     (table[i, j] > 0 && @constraint(ras8, x[i, j]
                                     >= tol * rand(MersenneTwister(i + j)))
@@ -680,7 +688,7 @@ for i in range(numdiv+1, numrow)
 end;
 for i in range(numdiv+1, numcol)
   @constraint(ras8, x[end, i] == rawsol5[end, i]);
-  i != numcol && @constraint(ras8, x[end-1, i] == 0);
+  i != numcol && @constraint(ras8, x[end-1, i] == lbx);
 end;
 @constraint(ras8, x[end, end] == rawsol5[end, end] + rawsol5[26, end]);
 @constraint(ras8, sum(x[1:end-1, end]) == x[end, end]);
@@ -705,14 +713,20 @@ insertcols!(sol8, 1, :ANZcode => austable8rr[:, 1]);
 #push!(sol, [austable5rr[end, 1] newrowtot' sum(newrowtot)]);
 println("and the new table", tn, " is:")
 println(pretty_table(sol8, nosubheader=true, formatters=ft_round(1)));
-# Export tables as CSV
+# Export table as CSV
 CSV.write(outputdir*"newtable"*tn*".csv", sol8);
 rawsoldiff = rawsol8 - rawsol5;
 soldiff = deepcopy(sol8);
 soldiff[:, 2:end] = rawsol8 - rawsol5;
 println("and the new table of differences is: ")
 println(pretty_table(soldiff, nosubheader=true, formatters=ft_round(1)));
-
+# Export table as CSV
+for i in range(1, numdiv)
+  for j in range(1, numdiv)
+    (soldiff[i, j + 1]) < 0 && (soldiff[i, j + 1] = 0);
+  end
+end;
+CSV.write(outputdir * "soldiff.csv", soldiff);
 #==============================================================================
 kapital ras prep
 ==============================================================================#
@@ -834,7 +848,7 @@ raskap8 = Model(Ipopt.Optimizer);
 # Should be equal dimensions
 numcol = numdiv;
 numrow = numdiv;
-@variable(raskap8, x[1:numrow, 1:numcol] >= 0);
+@variable(raskap8, x[1:numrow, 1:numcol] >= lbx);
 set_start_value.(x, flows[:, Not(:ANZcode)]);
 # Max entropy objective (or min relative to uniform)
 eps = 050e-2;
@@ -876,7 +890,7 @@ CSV.write(outputdir * "auskapflw8.csv", solkap8);
 # regional kapital
 #------------------------------------------------------------------------------
 rasregkap8 = Model(Ipopt.Optimizer);
-@variable(rasregkap8, x[1:numrow, 1:numcol] >= 0);
+@variable(rasregkap8, x[1:numrow, 1:numcol] >= lbx);
 set_start_value.(x[1:numrow], solkap8[1:numrow, Not(:ANZcode)]);
 @NLobjective(rasregkap8,
              Min,
