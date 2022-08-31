@@ -13,15 +13,19 @@ region = ["GLD"]
 refreg = ["AUS"]
 # Name of column that contains the row indices
 divhdr = "ANZcode"
+
 table8name = "austable8rr"
 table5name = "austable5rr"
 tablediffname = "austablediffrr"
-table8name = "newtable8"
-table5name = "newtable5"
-tablediffname = "soldiff"
+
+#table8name = "newtable8"
+#table5name = "newtable5"
+#tablediffname = "soldiff"
+
 tablekapname = "auskapflw8"
 tablelabname = "labsecreg"
 tablepopname = "popreg"
+tableoutname = "outperdiv"
 #tbl8 = "tbl8"
 #tbl5 = "tbl5"
 # Pull in tables from .csv files, ultimately it will come from the RAS code
@@ -30,6 +34,7 @@ tbl5 = CSV.read(outputdir * table5name * ".csv", DataFrame)
 tblkap = CSV.read(outputdir * tablekapname * ".csv", DataFrame)
 tbllab = CSV.read(outputdir * tablelabname * ".csv", DataFrame)
 tbldiff = CSV.read(outputdir * tablediffname * ".csv", DataFrame)
+tbloutperdiv = CSV.read(outputdir * tableoutname * ".csv", DataFrame)
 #tblpop = CSV.read(outputdir * tablepopname * ".csv", DataFrame)
 
 # Quickly mock up tbldiff from tables 5 and 8, ultimately it will come 
@@ -152,17 +157,30 @@ outtocsv("RAW_YPO_CCON", prepsubframe(Q12, sectorcodes, ["Q1"]));
 #
 # RAW_KAP_OUT - all sectors in the P2 row of table 8
 # P2 is a row - hence the permutedims
-outtocsv("RAW_KAP_OUT",
-           prepsubframe(permutedims(tbl8, 1), sectorcodes, ["`P2"]));
+(table8name == "austable8rr"
+ ?  outtocsv("RAW_KAP_OUT",
+           prepsubframe(permutedims(tbl8, 1), sectorcodes, ["`P2"]))
+ :  outtocsv("RAW_KAP_OUT",
+           prepsubframe(permutedims(tbl5, 1), sectorcodes, ["`P2"]))
+);
 # RAW_LAB_OUT all sectors in the P1 row of table 8
-outtocsv("RAW_LAB_OUT",
-           prepsubframe(permutedims(tbl8, 1), sectorcodes, ["`P1"]));
+(table8name == "austable8rr"
+ ?  outtocsv("RAW_LAB_OUT",
+           prepsubframe(permutedims(tbl8, 1), sectorcodes, ["`P1"]))
+ :  outtocsv("RAW_LAB_OUT",
+           prepsubframe(permutedims(tbl5, 1), sectorcodes, ["`P1"]))
+);
 # RAW_MED_OUT - all sectors in the T1 row of table 8 (maybe use sum instead)
-T1 = getsubframe(permutedims(tbl8, 1), sectorcodes, sectorcodes);
-for i in names(flows, Between(:B, :S))
+(table8name == "austable8rr"
+ ?  T1 = getsubframe(permutedims(tbl8, 1), sectorcodes, sectorcodes)
+ :  T1 = getsubframe(permutedims(tbl5, 1), sectorcodes, sectorcodes)
+);
+for i in names(tbl5, Between(:B, :S))
   T1[:, "A"] += T1[:, i]
-end
-outtocsv("RAW_MED_OUT", prepsubframe(T1, sectorcodes, ["A"]));
+end;
+T1 = T1[:, Between(:ANZcode, :A)];
+rename!(T1, ["ANZcode", "T1"]);
+outtocsv("RAW_MED_OUT", prepsubframe(T1, sectorcodes, ["T1"]));
 
 
 
@@ -192,4 +210,19 @@ outtocsv("REG_LAB", prepsubframe(tbllab, sectorcodes, region));
 # RAW_YPO_CINV - all sectors flows of kapflows table - not yet imported
 # CSV.write(outputdir*"RAW_YPO_CINV.csv", prepsubframe(kapflows, 
 #     sectorcodes, sectorcodes));
+
+rowshr = getsubframe(permutedims(tbl8, 1), sectorcodes, sectorcodes);
+colshr = getsubframe(tbl8, sectorcodes, sectorcodes);
+for i in 1:numdiv
+  rowshr[:, i + 1] *= 1 / tbl8[i, end];
+  colshr[:, i + 1] *= 1 / tbl8[end, i + 1];
+end 
+rowshr = permutedims(rowshr, 1);
+outtocsv("SHR_MED_ROW", prepsubframe(rowshr, sectorcodes, sectorcodes));
+outtocsv("SHR_MED_COL", prepsubframe(colshr, sectorcodes, sectorcodes));
+
+
+# RAW_OUT_REG_SEC output per region and division
+outtocsv("RAW_OUT_REG_SEC", prepsubframe(tbloutperdiv, sectorcodes, region)); 
+
 println("done saving to julia/output/*.csv")

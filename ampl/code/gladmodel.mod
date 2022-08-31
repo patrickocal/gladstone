@@ -78,10 +78,14 @@ param TAIL_SHR_CON 'tail consumption share (of output)' default 0.45 >= 0;
 param UInf 'infimum of interval for uniform dbn' default 0.4999 in [0, .5);
 param USup 'supremum of interval for uniform dbn' default 0.5001 in (.5, 1];
 param VInf 'infimum of interval for basic variables' default 1e-4;
-param VSup 'supremum of interval for basic variables' default 1e+5;
+param VSup 'supremum of interval for basic variables' default 1e+6;
 param OInf 'infimum of interval for observed/actual values' default 1e-7;
 param OSup 'supremum of interval for observed/actual values' default 1e+7;
 param LabSup 'supremum of interval for labour values' default 66e-2;
+param EXP_LAB_EXT 'Exponent of lab_ext_sec'
+  {Regions, Sectors, PathTimes} default 200e-2;
+param NAIRE 'Non-accelerating rate of employment'
+  {Regions, Sectors, PathTimes} default 100e-2;
 #==============================================================================
 #-----------parameters for storing (observable) path values
 #==============================================================================
@@ -117,11 +121,13 @@ param EULER_INTEGRAND 'Euler error integrand'
   {Regions, Sectors, PathTimesClosure} default 1; # in (-OSup, OSup);
 param EULER_RATIO 'Expected Euler ratio'
   {Regions, Sectors, PathTimes} default 1; # in (-1e+2, 1e+2);
-param NAIRE 'Non-accelerating rate of employment'
-  {Regions, Sectors, PathTimes} default 100e-2;
-param EXP_LAB_EXT 'Exponent of lab_ext_sec'
-  {Regions, Sectors, PathTimes} default 200e-2;
 param DOM 'actual path values for domestic output'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param XPO 'actual path values for exports'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param YMED_SUM 'actual path values for sum over a row of intermediate imports'
   {Regions, Sectors, PathTimes}
   default 100e-2;
 #==============================================================================
@@ -179,6 +185,15 @@ param RAW_XPO_JOUT 'raw export data: table8Q7'
 param RAW_DOM_JOUT 'raw total domestic uses: table8T6-Q7'
   {Regions, Sectors}
   default Uniform(UInf, USup) * 90e-2;
+param SHR_MED_ROW 'intermediate flows as a share of total demand (quasi-raw)'
+  {Regions, Sectors, Sectors}
+  default 100e-2;
+param SHR_MED_COL 'intermediate flows as a share of total cost (quasi-raw)'
+  {Regions, Sectors, Sectors}
+  default 100e-2;
+param RAW_OUT_REG_SEC 'raw output per region and sector'
+  {Regions, Sectors}
+  default 1;
 #==============================================================================
 # Computed parameters
 #==============================================================================
@@ -313,7 +328,7 @@ Computed Armington parameters
 -----------------------------------------------------------------------------*/
 #-----------foreign prices
 param PRC_YPO 'import prices' {Sectors, LookForward} default 100e-2;
-param PRC_EXA 'export prices' {Sectors, LookForward} default 100e-2;
+param PRC_XPO 'export prices' {Sectors, LookForward} default 100e-2;
 #-----------calibration factors
 param A_CCON 'calibration factor for composite consumption'
   default 100e-2;
@@ -459,12 +474,9 @@ param SHR_XPO_JOUT 'share of exports in output (joint production CET function)'
 param SHR_DOM_JOUT 'share of domestic uses in output (CET function)'
   {r in Regions, i in Sectors}
   = 1 - SHR_XPO_JOUT[r, i];
-param PRC_XPO 'exogenous price of exports (in domestic currency units)'
-  {i in Sectors, t in LookForward}
-  default 100e-2;
 param EPS_JOUT 'elasticity of subst. for export CET function'
   {Regions, Sectors}
-  = 4;
+  default 4;
 param SHR_DOM 'observed share of output for domestic uses'
   {Regions, Sectors, PathTimes}
   default 100e-2;
@@ -481,7 +493,7 @@ var shr_dom 'share of output going to domestic uses (p_dom / (p_dom + P_XPO))'
 #var gdp 'gross domestic product'
 #  {r in Regions, j in Sectors, t in LookForward}
 #  = (
-#    (A_EXA[j] ** RHO_EXA[j] * SHR_DOM_GDP[j] * (1 + TAX_GDP[j]) * mkt_clr[j, t])
+#    (A_XPO[j] ** RHO_XPO[j] * SHR_DOM_GDP[j] * (1 + TAX_GDP[j]) * mkt_clr[j, t])
 #      / (A_YPO[j] ** RHO_YPO[j] * SHR_YPO_OUT[j] * mkt_clr[j, t])
 #  ) ** (1  - 1 / RHO_YPO[j])
 #    * out[r, j, t];
@@ -733,7 +745,7 @@ var E_out 'current intermediate variable for output'
 var dom 'domestic uses'
   {r in Regions, i in Sectors, t in LookForward}
   = shr_dom[r, i, t] * E_out[r, i, t];
-var exo 'exports'
+var xpo 'exports'
   {r in Regions, i in Sectors, t in LookForward}
   = (1 - shr_dom[r, i, t]) * E_out[r, i, t];
 var utility 'current intermediate variable for utility'
@@ -773,6 +785,7 @@ subject to market_clearing 'market clearing for each sector and time'
 The_data section
 =============================================================================*/
 param datadir symbolic; #"the directory where parameter-input data is stored" symbolic;
+param outputdir symbolic;
 data;
 #-----------1xANZdiv model
 set Regions := GLD;
@@ -852,6 +865,12 @@ read table rdcm;
 table rycm IN "amplcsv"
 (datadir & "RAW_YPO_CMED.csv"): [index0, index1, index2], RAW_YPO_CMED;
 read table rycm;
+table smr IN "amplcsv"
+(datadir & "SHR_MED_ROW.csv"): [index0, index1, index2], SHR_MED_ROW;
+read table smr;
+table smc IN "amplcsv"
+(datadir & "SHR_MED_COL.csv"): [index0, index1, index2], SHR_MED_COL;
+read table smc;
 #-----------------------------------------------------------------------------#
 # two indices: regions and sectors
 #-----------------------------------------------------------------------------#
@@ -885,23 +904,22 @@ read table rxjo;
 table rdjo IN "amplcsv"
 (datadir & "RAW_DOM_JOUT.csv"): [index0, index1], RAW_DOM_JOUT;
 read table rdjo;
+table rors IN "amplcsv"
+(datadir & "RAW_OUT_REG_SEC.csv"): [index0, index1], RAW_OUT_REG_SEC;
+read table rors;
 display RAW_MED_OUT;
 #------------------------------------------------------------------------------
 #-----------set the horizon and length of paths
 #------------------------------------------------------------------------------
 let LSup := 15;
-let PSup := 61;
+let PSup := 105;
 #------------------------------------------------------------------------------
 #-----------opportunity to tune the calibration factors (still part of data)
 #------------------------------------------------------------------------------
-let ALPHA := 1;#271828182846e-11;
-let ALPHA_0 := 1;#271828182846e-11;
-let ALPHA := 171828182846e-11;
-let ALPHA_0 := 171828182846e-11;
 let BETA := 950e-3;
-param aA := 094e-2;
-param c20A := 090e-2;
-param c10A := 100e-2;
+#param aA := 094e-2;
+#param c20A := 090e-2;
+#param c10A := 100e-2;
 #let A["P"] := 40e-2;
 #let A["H"] := 20e-2;
 #let A["N"] := 20e-2;
@@ -909,13 +927,74 @@ param c10A := 100e-2;
 #let A["S"] := 20e-2;
 for {i in Sectors}{
   let DELTA[i] := 05e-2;
-  let PHI_ADJ[i] := 300e-2;
-  let A[i] := 200e-2;
+  let PHI_ADJ[i] := 400e-2;
+#  let A[i] := 015e-2;
+  let A[i] :=
+    (SHR_MED_ROW['GLD', i, i]
+      / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT) / RHO_OUT)
+      * SCALE_OUT ** (1 / RHO_OUT)
+    + 2 * RAW_OUT_REG_SEC['GLD', i]
+      / sum{j in Sectors} RAW_OUT_REG_SEC['GLD', j];
+  let EPS_JOUT['GLD', i] := 10e-2;
+  for {j in Sectors}{
+  let EPS_CMED['GLD', i, j] := 10e-2;
   };
-display A;
-for {r in Regions, i in Sectors}{
-  let KAP[r, i, PInf] := 1;
 };
+#-----------------------------------------------------------------------------#
+# initial kap and growth factor if starting from a future point in time
+#-----------------------------------------------------------------------------#
+let ALPHA := 1;#271828182846e-11;
+let ALPHA_0 := 1;#271828182846e-11;
+let ALPHA := 101828182846e-11 ** 105;
+let ALPHA_0 := 101828182846e-11;
+load amplxl.dll;
+let datadir := "ampl/data/";
+table kapxl IN "amplxl"
+  (datadir & "KAP-105-fin" & ".xlsx") "Sheet1":
+#  (datadir & "KAP-71-A15-PHI0-ALPHA1058" & ".xlsx") "Sheet1":
+  [Regions, Sectors, PathTimes], KAP;
+read table kapxl; #table inkap IN "amplcsv"
+# to continue the previous loop
+#for {r in Regions, i in Sectors} let KAP[r, i, 0] := KAP[r, i, 36];
+#(datadir & "KAP.csv"): [Regions, Sectors, PathTimes], KAP;
+#read table inkap;
+
+#-----------------------------------------------------------------------------#
+# initial kap and growth factor if starting from scratch (comment out otherwise)
+#-----------------------------------------------------------------------------#
+#let ALPHA := 101828182846e-11;
+#let ALPHA_0 := 101828182846e-11;
+#for {r in Regions, i in Sectors}{
+#  let KAP[r, i, PInf]
+#    := 1;
+#    := RAW_KAP_OUT[r, i] / sum{j in Sectors} RAW_KAP_OUT[r, j]
+#      + RAW_OUT_REG_SEC[r, i] / sum{j in Sectors} RAW_OUT_REG_SEC[r, j]
+#      + 50e-2
+#      ;
+#};
+display KAP;
+#-----------------------------------------------------------------------------#
+# regionalisation
+#-----------------------------------------------------------------------------#
+# no shock
+#-----------------------------------------------------------------------------#
+#let A['C'] := 120e-2;
+#let A['M'] := 130e-2;
+let A['L'] := 070e-2;
+let A['K'] := 070e-2;
+let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
+let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 130e-2;
+let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
+let RAW_YPO_CMED['GLD', 'B', 'C'] := RAW_YPO_CMED['GLD', 'B', 'C'] * 130e-2;
+#-----------------------------------------------------------------------------#
+# the shock
+#-----------------------------------------------------------------------------#
+let A['C'] := A['C'] * 080e-2;
+let RAW_XPO_JOUT['GLD', 'C'] := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
+let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
+let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
+let KAP['GLD', 'C', 0] := KAP['GLD', 'C', 0] * 3 / 4;
+display A;
 #let A['B'] := 50e-2;
 #let KAP['GLD', 'B', 0] := 200e-2;
 #let KAP['GLD', 'R', 0] := 20e-2;
@@ -923,61 +1002,77 @@ for {r in Regions, i in Sectors}{
 #let KAP['GLD', 'N', 0] := 40e-2;
 #let KAP['GLD', 'H', 0] := 50e-2;
 #let KAP['GLD', 'P', 0] := 50e-2;
-let A_CON := 05100e-2; #increase this to increase labour
-let A_INV := 0010e-2;
+let A_CON := 09000e-2; #increase this to increase labour and consumption
+let A_INV := 0090e-2;
 let A_MED := 0010e-2;
 let A_VAL := 0001e-2;
-let A_LAB_EXT := -0145e-2;
+let A_LAB_EXT := -0545e-2;
 #let A_CMED := 1;
-let TAIL_SHR_CON := 045e-2;
+let TAIL_SHR_CON := 050e-2;
 
-let EPS_INV := 0700e-3;
-let EPS_MED := 0860e-3;
+let EPS_INV := 0300e-3;
+let EPS_MED := 0400e-3;
 let EPS_CON := 0999e-3;
 let EPS_OUT := 0800e-3;
+let EPS_LAB := 050e-2;
 
-let SCALE_CON := 200e-3;
+let SCALE_CON := 300e-3;
 let SCALE_INV := 999e-3;
 let SCALE_MED := 999e-3;
 let SCALE_OUT := 999e-3;
+let SCALE_LAB := 600e-2;
 let SCALE_CMED := 990e-3;
 let SCALE_CINV := 990e-3;
-let EPS_LAB := 050e-2;
-let SCALE_LAB := 600e-2;
 for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
   fix lab[r, j, t] := 33e-2;
-  fix lab_ext[r, j, t] := 100e-2;
+  #fix lab_ext[r, j, t] := 100e-2;
   let NAIRE[r, j, t] := 95e-2;
   let EXP_LAB_EXT[r, j, t] := 2;
-  if SHR_INV_CES[r, i, j] < 1e-13 then
+  if SHR_INV_CES[r, i, j] < 1e-12 then
     fix dinv[r, i, j, t] := 0;
-  if SHR_MED_CES[r, i, j] < 1e-13 then
+  if SHR_MED_CES[r, i, j] < 1e-12 then
     fix dmed[r, i, j, t] := 0;
 };
-#-----------------------------------------------------------------------------#
-# initial KAP
-#-----------------------------------------------------------------------------#
-load amplxl.dll;
-let datadir := "ampl/data/";
-#table kapxl IN "amplxl"
-#(datadir & "KAP.xlsx") "KAP": [Regions, Sectors, PathTimes], KAP;
-#read table kapxl;
-#table inkap IN "amplcsv"
-#(datadir & "KAP.csv"): [Regions, Sectors, PathTimes], KAP;
-#read table inkap;
-
 update data;
+param CH_GROWTH_OUT {Regions, Sectors, PathTimes} default 0;
+param nwshr 'Alternative share parameter'
+  {r in Regions, i in Sectors}
+  = A[i] ** (SCALE_OUT - RHO_OUT - 1)
+          * RAW_KAP_OUT[r, i] ** (1 - RHO_OUT)
+          / (RAW_LAB_OUT[r, i]
+             + RAW_KAP_OUT[r, i]
+             + RAW_MED_OUT[r, i]) ** (SCALE_OUT - RHO_OUT);
+param nwshr2 'Alternative share parameter for square parameters'
+  {r in Regions, i in Sectors, j in Sectors}
+  = A[i] ** (SCALE_INV - RHO_INV - 1)
+          * RAW_INV_FLW[r, i, j] ** (1 - RHO_INV)
+          / (sum{ii in Sectors} RAW_INV_FLW[r, ii, j]
+            ) ** (SCALE_INV - RHO_INV);
 /*=============================================================================
 Solving the model
 =============================================================================*/
 param InstanceName symbolic;
 option solver knitro;
-#option solver conopt;
+let outputdir := "ampl/output/";
+#option solver ipopt;
 option show_stats 1;
-param CH_GROWTH_OUT {Regions, Sectors, PathTimes} default 0;
-param nwshr
-  default A['C'] ** (SCALE_OUT - RHO_OUT - 1)
-          * RAW_LAB_OUT['GLD', 'C'] ** (1 - RHO_OUT)
-          / (RAW_LAB_OUT['GLD', 'C']
-             + RAW_KAP_OUT['GLD', 'C']
-             + RAW_MED_OUT['GLD', 'C']) ** (SCALE_OUT - RHO_OUT);
+#=============================================================================#
+# setup for output of results
+#=============================================================================#
+param experiment symbolic;
+param shock symbolic;
+param reg symbolic;
+#option solver conopt;
+let shock := "shock";
+let reg := "aus";
+let outputdir := ("ampl/output/" & reg & shock & "/");
+# declare output tables
+table res OUT "amplxl" (outputdir & "Results-fin.xlsx") "Results":
+  [Regions, Sectors, PathTimes],
+  KAP, E_OUT, CON, XPO, YMED_SUM, GROWTH_KAP, GROWTH_OUT,
+  EULER_INTEGRAND, EULER_RATIO;
+#=============================================================================#
+# the above model may be solved in isolation, but to solve a path issue the
+# command: "include gladpath.run" after instantiating this model
+# or, on the command line: "ampl <this file> path.run"
+#=============================================================================#

@@ -1,20 +1,24 @@
-
 #-----------solve the model along a given path
 for {s in PathTimes}{
   display s, ctime();
+  #if s = 6 then {
+  #  let A['C'] := (1 - 10e-2) * A['C'];
+  #  let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
+  #  let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 1 / 4;
+  #  let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 1 / 6;
+  #  let RAW_XPO_JOUT['GLD', 'C'] := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4;
+  #};
 #-----------update kapital (CJ call this the simulation step)
   fix {r in Regions, j in Sectors} kap[r, j, LInf] := KAP[r, j, s];
-  if s > PInf then
   let ALPHA := ALPHA * ALPHA_0;
   for {r in Regions, t in LookForwardClosure}{
     #let A_LAB[r, t] := - 271828182846e-11 ** - ((s + t) * SCALE_LAB);
   }
+#  if s > 5 then 
+
   #if s = 5 then
   #  unfix {r in Regions, j in Sectors, t in LookForward}
   #    lab[r, j, t] := 31.4e-2;
-  #if s = 20 then
-  #  let A['A'] := (1 - 33e-2) * A['A'];
-  ;
 #  if s <= 6 then option solver knitro; else option solver conopt;
 #-----------display some parameter values:
   display PHI_ADJ['A'], A_LAB_EXT,
@@ -60,7 +64,9 @@ for {s in PathTimes}{
     let SHR_DOM[r, i, s] := shr_dom[r, i, LInf];
     let ADJ_COST_KAP[r, i, s] := adj_cost_kap[r, i, LInf];
     let KAP[r, i, s + 1] := kap[r, i, LInf + 1];
-    let DUAL_KAP[r, i, s] := kap_transition[r, i, LInf]
+    let DUAL_KAP[r, i, s] := kap_transition[r, i, LInf];
+    let XPO[r, i, s] := xpo[r, i, LInf];
+    let YMED_SUM[r, i, s] := sum{j in Sectors} ymed[r, i, j, LInf];
   };
 #    let TAIL_SHR_CON := (sum{r in Regions, i in Sectors} CON[r, i, s])
 #      / (sum{r in Regions, i in Sectors} E_OUT[r, i, s]);
@@ -105,6 +111,9 @@ for {s in PathTimes}{
     let EULER_RATIO[r, i, s] 
         := BETA * EULER_INTEGRAND[r, i, s] / DUAL_KAP[r, i, s - 1];
   };
+
+   write table res;
+#  write table kp;
   display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
     min{r in Regions, i in Sectors} E_OUT[r, i, s],
     max{r in Regions, i in Sectors} E_OUT[r, i, s],
@@ -127,6 +136,8 @@ for {s in PathTimes}{
     min{r in Regions, i in Sectors} GROWTH_KAP[r, i, s],
     max{r in Regions, i in Sectors} GROWTH_KAP[r, i, s],
     min{r in Regions, i in Sectors} DUAL_KAP[r, i, s],
+    min{r in Regions, i in Sectors} XPO[r, i, s],
+    max{r in Regions, i in Sectors} XPO[r, i, s],
     utility, tail_val, pres_disc_val,
     (sum{r in Regions, i in Sectors} con[r, i, LInf])
       / (sum{r in Regions, i in Sectors} E_out[r, i, LInf]),

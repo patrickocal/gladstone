@@ -19,6 +19,22 @@ numdiv = length(ANZdiv);
 # present working directory is the parent folder "gladstone" or "maiwar"
 datadir = "julia"*sep*"data"*sep
 outputdir = "julia"*sep*"output"*sep
+#=============================================================================#
+# function to get list of row indices for given sectors etc. Used only as an 
+# input to the getsubframe function at this stage
+function getrows(dfColumn, lsOfSectors)
+    rowVec = [];
+    for i in 1:length(lsOfSectors)
+        append!(rowVec, findall(x -> x == lsOfSectors[i], dfColumn)[1])
+    end
+    return rowVec
+end
+# general function to get a sub-frame based on row and column names
+# makes the code for extracting each parameter much more readable
+function getsubframe(df, lsRows, lsCols, divn=divhdr);
+    subdf = df[getrows(df[:, divn], lsRows), append!([divn], lsCols)]
+    return subdf
+end
 #==============================================================================
 Aggregate US capital flows table to Aus 19 sectors
 ==============================================================================#
@@ -430,6 +446,7 @@ gap = sum(q, dims=1) - sum(p, dims=1);
 gapgvadbn = p[[1, 2, 4], :] / sum(p[[1, 2, 4], :], dims=1) .* gap;
 p[[1, 2, 4], :] = p[[1, 2, 4], :] + gapgvadbn;
 outperdiv = outpersec;
+CSV.write(outputdir * "outperdiv.csv", outperdiv);
 outpersec = outpersec[:, Not("ANZdiv")];
 for i in range(1, 6)
   push!(outpersec, [austable8[numdiv + i, 1] p[i, 1] p[i, 2]])
@@ -616,7 +633,7 @@ eps = 050e-2;
                    )
                )
             );
-tol = 1e+0;
+tol = 1e+1;
 #------------------------------------------------------------------------------
 # the following are constraints for table 8
 #------------------------------------------------------------------------------
@@ -631,6 +648,10 @@ for j in range(1, numcol)
     #@constraint(ras8, sum(x[:, j]) <= newrowtot[j] + tol);
     #@constraint(ras8, sum(x[:, j]) >= newrowtot[j] - tol);
     @constraint(ras8, sum(x[:, j]) == 2 * x[end, j]);
+    # gva and t1 have to be in proportion
+    gvarows = [numdiv + 1, numdiv + 2, numdiv + 4];
+    @constraint(ras8, sum(x[1:numdiv, j]) <= sum(x[gvarows, j]) + tol)
+    @constraint(ras8, sum(x[1:numdiv, j]) >= sum(x[gvarows, j]) - tol)
 end;
 colC = columnindex(tabledf, :C);
 colQ1 = columnindex(tabledf, :Q1);
@@ -727,6 +748,16 @@ for i in range(1, numdiv)
   end
 end;
 CSV.write(outputdir * "soldiff.csv", soldiff);
+
+
+gldgva8 =  sum(Matrix(getsubframe(sol8,
+                                 ["`P1", "`P2", "`P4"],
+                                 sectorcodes))[:, 2:end],
+              dims=1)
+gldt18 =  sum(Matrix(getsubframe(sol8,
+                                sectorcodes,
+                                sectorcodes))[:, 2:end],
+             dims=1)
 #==============================================================================
 kapital ras prep
 ==============================================================================#
@@ -889,39 +920,39 @@ CSV.write(outputdir * "auskapflw8.csv", solkap8);
 #------------------------------------------------------------------------------
 # regional kapital
 #------------------------------------------------------------------------------
-rasregkap8 = Model(Ipopt.Optimizer);
-@variable(rasregkap8, x[1:numrow, 1:numcol] >= lbx);
-set_start_value.(x[1:numrow], solkap8[1:numrow, Not(:ANZcode)]);
-@NLobjective(rasregkap8,
-             Min,
-             sum(sum((x[i, j] - solkap8[i, j + 1]) ^ 2
-                     for i in range(1, numrow)
-                    ) ^ 2
-                 for j in range(1, numcol)
-                )
-            );
-regcolsum = sol8[1:numrow, :Q3] + sol8[1:numrow, :Q4];
-regcolsumtot = sum(regcolsum);
-regrowsum = gfcfbiba * regcolsumtot / gfcfbibatot;
-# Col-sums constraint - must be equal to the IO totals
-for i in range(1, numrow)
-  @constraint(rasregkap8, sum(x[i, :]) <= regcolsum[i] + tol);
-  @constraint(rasregkap8, sum(x[i, :]) >= regcolsum[i] - tol);
-end; 
-# Row-sums constraint - must be equal to the GFCF totals
-for j in range(1, numcol)
-  @constraint(rasregkap8, sum(x[:, j]) <= regrowsum[j] + tol);
-  @constraint(rasregkap8, sum(x[:, j]) >= regrowsum[j] - tol);
-    #@constraint(raskap8, sum(x[:, j]) == 2 * x[end, j]);
-end;
-
-optimize!(rasregkap8)
-
-rawsolregkap8 = value.(x);
-solregkap8 = deepcopy(flows)
-solregkap8[:, Not(:ANZcode)] = rawsolregkap8[1:numrow, :];
-insertcols!(solregkap8, ncol(solregkap8) + 1, :T8 => regcolsum)
-push!(solregkap8, ["T7" regrowsum' regcolsumtot])
-println(pretty_table(solregkap8, nosubheader=true, formatters=ft_round(1)));
-# Export tables as CSV
-CSV.write(outputdir*"regkapflw8.csv", solregkap8);
+#rasregkap8 = Model(Ipopt.Optimizer);
+#@variable(rasregkap8, x[1:numrow, 1:numcol] >= lbx);
+#set_start_value.(x[1:numrow], solkap8[1:numrow, Not(:ANZcode)]);
+#@NLobjective(rasregkap8,
+#             Min,
+#             sum(sum((x[i, j] - solkap8[i, j + 1]) ^ 2
+#                     for i in range(1, numrow)
+#                    ) ^ 2
+#                 for j in range(1, numcol)
+#                )
+#            );
+#regcolsum = sol8[1:numrow, :Q3] + sol8[1:numrow, :Q4];
+#regcolsumtot = sum(regcolsum);
+#regrowsum = gfcfbiba * regcolsumtot / gfcfbibatot;
+## Col-sums constraint - must be equal to the IO totals
+#for i in range(1, numrow)
+#  @constraint(rasregkap8, sum(x[i, :]) <= regcolsum[i] + tol);
+#  @constraint(rasregkap8, sum(x[i, :]) >= regcolsum[i] - tol);
+#end; 
+## Row-sums constraint - must be equal to the GFCF totals
+#for j in range(1, numcol)
+#  @constraint(rasregkap8, sum(x[:, j]) <= regrowsum[j] + tol);
+#  @constraint(rasregkap8, sum(x[:, j]) >= regrowsum[j] - tol);
+#    #@constraint(raskap8, sum(x[:, j]) == 2 * x[end, j]);
+#end;
+#
+#optimize!(rasregkap8)
+#
+#rawsolregkap8 = value.(x);
+#solregkap8 = deepcopy(flows)
+#solregkap8[:, Not(:ANZcode)] = rawsolregkap8[1:numrow, :];
+#insertcols!(solregkap8, ncol(solregkap8) + 1, :T8 => regcolsum)
+#push!(solregkap8, ["T7" regrowsum' regcolsumtot])
+#println(pretty_table(solregkap8, nosubheader=true, formatters=ft_round(1)));
+## Export tables as CSV
+#CSV.write(outputdir*"regkapflw8.csv", solregkap8);
