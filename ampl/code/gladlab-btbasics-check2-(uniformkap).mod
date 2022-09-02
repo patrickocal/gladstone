@@ -25,13 +25,13 @@ set Regions;
 set Sectors ordered;
 #-----------the planning horizon and corresponding set:
 #-----------lower values of LFwd are more myopic; longer satisfy Euler Eqn.
-set LookForward 'planning set' = {LInf .. LSup - 1} ordered;
+set LookForward 'planning set' = {LInf .. LSup + LInf - 1} ordered;
 set LookForwardClosure 'includes extra time for closing out the problem'
-  = {LInf .. LSup} ordered;
+  = {LInf .. LSup + LInf} ordered;
 #-----------Each path is a state of the world and has the following structure:
-set PathTimes 'times along a path' = {PInf .. PSup - 1} ordered;
+set PathTimes 'times along a path' = {PInf .. PSup + PInf - 1} ordered;
 set PathTimesClosure 'includes extra time for closing out the problem'
-  = {PInf .. PSup} ordered;
+  = {PInf .. PSup + PInf} ordered;
 #-----------The set of paths are indexed by
 set PathSpace 'path space: the set of paths'
   # for default we adopt a two-state Markov chain with unique absorbing state
@@ -85,9 +85,9 @@ param OInf 'infimum of interval for observed/actual values' default 1e-7;
 param OSup 'supremum of interval for observed/actual values' default 1e+7;
 param LabSup 'supremum of interval for labour values' default VSup;
 param EXP_LAB_EXT 'Exponent of lab_ext_sec'
-  {Regions, Sectors, LookForward} default 200e-2;
+  {Regions, Sectors, PathTimes} default 200e-2;
 param NAIRE 'Non-accelerating rate of employment'
-  {Regions, Sectors, LookForward} default 100e-2;
+  {Regions, Sectors, PathTimes} default 100e-2;
 #-----------productivity and relative importance of labour in utility
 param A 'productivity trend'
   {i in Sectors}
@@ -982,8 +982,7 @@ display RAW_MED_OUT;
 #-----------set the horizon and length of paths
 #------------------------------------------------------------------------------
 let LSup := 15;
-let PInf := 0;
-let PSup := 70;
+let PSup := 100;
 #------------------------------------------------------------------------------
 #-----------opportunity to tune the calibration factors (still part of data)
 #------------------------------------------------------------------------------
@@ -1011,6 +1010,71 @@ for {i in Sectors}{
   #let A[i] := 111e-1;
   };
 };
+#-----------------------------------------------------------------------------#
+# initial kap and growth factor if starting from a future point in time
+#-----------------------------------------------------------------------------#
+let SHR_EFF_OUT := 8e-1;
+let ALPHA := 1;#271828182846e-11;
+let ALPHA_0 := 1;#271828182846e-11;
+let ALPHA := 101828182846e-11 ** PSup;
+let ALPHA_0 := 101828182846e-11;
+load amplxl.dll;
+let datadir := "ampl/data/";
+table kapxl IN "amplxl"
+  (datadir & "KAP-105-fin" & ".xlsx") "Sheet1":
+#  (datadir & "KAP-71-A15-PHI0-ALPHA1058" & ".xlsx") "Sheet1":
+  [Regions, Sectors, PathTimes], KAP;
+read table kapxl; #table inkap IN "amplcsv"
+# to continue the previous loop
+#for {r in Regions, i in Sectors} let KAP[r, i, 0] := KAP[r, i, 36];
+#(datadir & "KAP.csv"): [Regions, Sectors, PathTimes], KAP;
+#read table inkap;
+
+#-----------------------------------------------------------------------------#
+# initial kap and growth factor if starting from scratch (comment out otherwise)
+#-----------------------------------------------------------------------------#
+let ALPHA := 101828182846e-11;
+let ALPHA_0 := 101828182846e-11;
+for {r in Regions, i in Sectors}{
+  let KAP[r, i, PInf]
+    := 1;
+#    := RAW_KAP_OUT[r, i] / sum{j in Sectors} RAW_KAP_OUT[r, j]
+#      + RAW_OUT_REG_SEC[r, i] / sum{j in Sectors} RAW_OUT_REG_SEC[r, j]
+#      + 50e-2
+#      ;
+};
+display KAP;
+#-----------------------------------------------------------------------------#
+# regionalisation
+#-----------------------------------------------------------------------------#
+# no shock
+#-----------------------------------------------------------------------------#
+#let A['C'] := 130e-2 * A['C'];
+#let A['M'] := 130e-2;
+let A['L'] := 070e-2 * A['L'];
+let A['K'] := 070e-2 * A['K'];
+let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
+let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 130e-2;
+let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
+let RAW_YPO_CMED['GLD', 'B', 'C'] := RAW_YPO_CMED['GLD', 'B', 'C'] * 130e-2;
+# finally, the subsidy
+let RAW_KAP_OUT['GLD', 'C'] := RAW_KAP_OUT['GLD', 'C'] + 174000; 
+#-----------------------------------------------------------------------------#
+# the shock
+#-----------------------------------------------------------------------------#
+#let A['C'] := A['C'] * 080e-2;
+#let RAW_XPO_JOUT['GLD', 'C'] := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
+#let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
+#let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
+#let KAP['GLD', 'C', 0] := KAP['GLD', 'C', 0] * 3 / 4;
+display A;
+#let A['B'] := 50e-2;
+#let KAP['GLD', 'B', 0] := 200e-2;
+#let KAP['GLD', 'R', 0] := 20e-2;
+#let KAP['GLD', 'S', 0] := 40e-2;
+#let KAP['GLD', 'N', 0] := 40e-2;
+#let KAP['GLD', 'H', 0] := 50e-2;
+#let KAP['GLD', 'P', 0] := 50e-2;
 let A_CON := 00100e-2; #increase this to increase labour and consumption
 let A_INV := 0090e-2;
 let A_MED := 0010e-2;
@@ -1035,39 +1099,13 @@ let SCALE_CINV := 990e-3;
 for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
 #  fix lab[r, j, t] := 33e-2;
   fix lab_ext[r, j, t] := 100e-2;
+  let NAIRE[r, j, t] := 95e-2;
+  let EXP_LAB_EXT[r, j, t] := 2;
   if SHR_INV_CES[r, i, j] < 1e-12 then
     fix dinv[r, i, j, t] := 0;
   if SHR_MED_CES[r, i, j] < 1e-12 then
     fix dmed[r, i, j, t] := 0;
 };
-let SHR_EFF_OUT := 8e-1;
-let ALPHA_0 := 101828182846e-11;
-#-----------------------------------------------------------------------------#
-# regionalisation
-#-----------------------------------------------------------------------------#
-# no shock
-#-----------------------------------------------------------------------------#
-#let A['C'] := 130e-2 * A['C'];
-#let A['M'] := 130e-2;
-let A['D'] := 070e-2 * A['D'];
-let A['L'] := 070e-2 * A['L'];
-let A['K'] := 070e-2 * A['K'];
-let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
-let RAW_MED_FLW['GLD', 'B', 'C'] := RAW_MED_FLW['GLD', 'B', 'C'] * 200e-2;
-let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 150e-2;
-let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
-let RAW_YPO_CMED['GLD', 'B', 'C']
-  := RAW_YPO_CMED['GLD', 'B', 'C'] * 500e-2;
-# finally, the subsidy
-let RAW_KAP_OUT['GLD', 'C'] := RAW_KAP_OUT['GLD', 'C'] + 174000; 
-display A;
-#let A['B'] := 50e-2;
-#let KAP['GLD', 'B', 0] := 200e-2;
-#let KAP['GLD', 'R', 0] := 20e-2;
-#let KAP['GLD', 'S', 0] := 40e-2;
-#let KAP['GLD', 'N', 0] := 40e-2;
-#let KAP['GLD', 'H', 0] := 50e-2;
-#let KAP['GLD', 'P', 0] := 50e-2;
 update data;
 param CH_GROWTH_OUT {Regions, Sectors, PathTimes} default 0;
 param nwshr 'Alternative share parameter'
@@ -1088,13 +1126,21 @@ Solving the model
 =============================================================================*/
 param InstanceName symbolic;
 option solver knitro;
+let outputdir := "ampl/output/";
 #option solver ipopt;
 option show_stats 1;
-# declare some parameters for directories and files
+#=============================================================================#
+# setup for output of results
+#=============================================================================#
 param experiment symbolic;
 param shock symbolic;
 param reg symbolic;
 param filename symbolic;
+#option solver conopt;
+let shock := "historic";
+let reg := "aus";
+let filename := "gladlab-btbasics-check2";
+let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
 # the above model may be solved in isolation, but to solve a path issue the
 # command: "include gladpath.run" after instantiating this model

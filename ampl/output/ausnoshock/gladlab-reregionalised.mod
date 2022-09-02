@@ -25,13 +25,13 @@ set Regions;
 set Sectors ordered;
 #-----------the planning horizon and corresponding set:
 #-----------lower values of LFwd are more myopic; longer satisfy Euler Eqn.
-set LookForward 'planning set' = {LInf .. LSup - 1} ordered;
+set LookForward 'planning set' = {LInf .. LSup + LInf - 1} ordered;
 set LookForwardClosure 'includes extra time for closing out the problem'
-  = {LInf .. LSup} ordered;
+  = {LInf .. LSup + LInf} ordered;
 #-----------Each path is a state of the world and has the following structure:
-set PathTimes 'times along a path' = {PInf .. PSup - 1} ordered;
+set PathTimes 'times along a path' = {PInf .. PSup + PInf - 1} ordered;
 set PathTimesClosure 'includes extra time for closing out the problem'
-  = {PInf .. PSup} ordered;
+  = {PInf .. PSup + PInf} ordered;
 #-----------The set of paths are indexed by
 set PathSpace 'path space: the set of paths'
   # for default we adopt a two-state Markov chain with unique absorbing state

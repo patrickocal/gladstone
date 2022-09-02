@@ -1,16 +1,11 @@
 #=============================================================================#
-# initial and final period for PathTimes (the set over which we iterate)
-#=============================================================================#
-let PInf := 70;
-let PSup := 105;
-#=============================================================================#
 # setup for output of results
 #=============================================================================#
 let outputdir := "ampl/output/";
 #option solver conopt;
-let shock := "noshock";
+let shock := "shock";
 let reg := "aus";
-let filename := ("gladlab-" & PInf & "-reregionalised" & shock);
+let filename := ("gladlab-70-reregionalised" & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
 # declare output tables
@@ -30,10 +25,12 @@ table aggres OUT "amplxl"
 #-----------------------------------------------------------------------------#
 # initial kap and growth factor if starting from a future point in time
 #-----------------------------------------------------------------------------#
+let PInf := 70;
+let PSup := 105;
 load amplxl.dll;
 let datadir := "ampl/data/";
 table kapxl IN "amplxl"
-  (datadir & "KAP-" & PInf & "-reregionalised" & ".xlsx") "Sheet1":
+  (datadir & "KAP-70-reregionalised" & ".xlsx") "Sheet1":
   [Regions, Sectors, PathTimes], KAP;
 read table kapxl; #table inkap IN "amplcsv"
 # to continue the previous loop
@@ -63,14 +60,14 @@ for {s in PathTimes}{
 #-----------------------------------------------------------------------------#
 # the shock
 #-----------------------------------------------------------------------------#
-  #if s = 71 then {
-  #  let A['C'] := A['C'] * 080e-2;
-  #  let RAW_XPO_JOUT['GLD', 'C'] := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
-  #  let RAW_MED_FLW['GLD', 'B', 'C'] := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
-  #  let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
-  #  let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
-  #  let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
-  #};
+  if s = 71 then {
+    let A['C'] := A['C'] * 080e-2;
+    let RAW_XPO_JOUT['GLD', 'C'] := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
+    let RAW_MED_FLW['GLD', 'B', 'C'] := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
+    let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
+    let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
+    let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
+  };
 #-----------update kapital (CJ call this the simulation step)
   fix {r in Regions, j in Sectors} kap[r, j, LInf] := KAP[r, j, s];
   let ALPHA := ALPHA_0 ** s;
