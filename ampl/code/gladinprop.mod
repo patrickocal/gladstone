@@ -40,8 +40,6 @@ set AllTimes 'all time periods associated with a path' = {TInf .. TSup};
 #==============================================================================
 #-----------Parameters
 #==============================================================================
-param KAP 'observed kapital' {Regions, Sectors, PathTimesClosure}
-  default 1e+0; # in (OInf, OSup);
 param StrtTm 'start time for each step on each path' {PathTimes, PathSpace}
   default time();
 param EndTm 'start time for each step on each path' {PathTimes, PathSpace}
@@ -88,24 +86,50 @@ param EXP_LAB_EXT 'Exponent of lab_ext_sec'
   {Regions, Sectors, PathTimes} default 200e-2;
 param NAIRE 'Non-accelerating rate of employment'
   {Regions, Sectors, PathTimes} default 100e-2;
-#-----------productivity and relative importance of labour in utility
-param A 'productivity trend'
-  {i in Sectors}
-  default 1; #(1 - (1 - DELTA[i]) * BETA) / (SHR_KAP_OUT_CES[r, i] * BETA) >= 0;
-param A_LAB 'importance of disutility of labour (weight in utility function)' 
-  {Regions, LookForwardClosure}
-    default -1;
-param A_LAB_EXT 'disutility weight for labourforce deviations in utility'
-  default -1;
-  #(1 - SHR_KAP_OUT_CES[r, i]) * A[i] * (A[i] - DELTA[i]) ** (-1 / GAMMA[r]) >= 0;
-param A_CON 'importance of consumption in utility'
-  default 1;
-param A_VAL 'Calibration factor for terminal value function'
-  default 1;
-param A_INV 'Calibration factor for investment'
-  default 1;
-param A_MED 'Calibration factor for intermediate bundle'
-  default 1;
+#==============================================================================
+#-----------parameters for storing (observable) path values
+#==============================================================================
+param CON 'observed consumption' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param INV_SEC 'observed investment' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param INV_SUM 'observed total investment' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param MED_SUM 'observed total intermediate flows' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param LAB 'observed labour' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param LAB_EXT 'observed laborforce participation' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param KAP 'observed kapital' {Regions, Sectors, PathTimesClosure}
+  default 1e+0; # in (OInf, OSup);
+param E_OUT 'observed Exp. output' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param ADJ_COST_KAP 'observed adjustment costs of kapital'
+  {Regions, Sectors, PathTimes} default 0; # in [0, OSup);
+param MKT_CLR 'observed output' {Sectors, PathTimes}
+  default 0; # in (-1e-4, 1e-4); 
+param DUAL_KAP 'lagrange multiplier for kapital accumulation'
+  {Regions, Sectors, PathTimes} default 1e+0; # in (-OSup, OSup);
+param DUAL_MKT_CLR 'lagrange multiplier for market clearing constraint'
+  {Sectors, PathTimes} default 1e+0;# in [0, OSup);
+param GROWTH_KAP 'observed growth rate for kapital'
+  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
+param GROWTH_OUT 'observed growth rate for output'
+  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
+param EULER_INTEGRAND 'Euler error integrand'
+  {Regions, Sectors, PathTimesClosure} default 1; # in (-OSup, OSup);
+param EULER_RATIO 'Expected Euler ratio'
+  {Regions, Sectors, PathTimes} default 1; # in (-1e+2, 1e+2);
+param DOM 'actual path values for domestic output'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param XPO 'actual path values for exports'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param YMED_SUM 'actual path values for sum over a row of intermediate imports'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
 #==============================================================================
 # raw flow data parameters
 #==============================================================================
@@ -167,9 +191,6 @@ param SHR_MED_ROW 'intermediate flows as a share of total demand (quasi-raw)'
 param SHR_MED_COL 'intermediate flows as a share of total cost (quasi-raw)'
   {Regions, Sectors, Sectors}
   default 100e-2;
-param RAW_OUT_REG_SEC 'raw output per region and sector'
-  {Regions, Sectors}
-  default 1;
 #==============================================================================
 # Computed parameters
 #==============================================================================
@@ -189,6 +210,24 @@ param RHO_OUT_HAT 'inverse of RHO_OUT', = 1 / RHO_OUT;
 param RHO_CON 'exponent of the CON ces aggregator'
   = 1 - 1 / EPS_CON; 
 param RHO_CON_HAT 'inverse of RHO_CON', = 1 / RHO_OUT;
+#-----------productivity and relative importance of labour in utility
+param A 'productivity trend'
+  {i in Sectors}
+  default 1; #(1 - (1 - DELTA[i]) * BETA) / (SHR_KAP_OUT_CES[r, i] * BETA) >= 0;
+param A_LAB 'importance of disutility of labour (weight in utility function)' 
+  {Regions, LookForwardClosure}
+    default -1;
+param A_LAB_EXT 'disutility weight for labourforce deviations in utility'
+  default -1;
+  #(1 - SHR_KAP_OUT_CES[r, i]) * A[i] * (A[i] - DELTA[i]) ** (-1 / GAMMA[r]) >= 0;
+param A_CON 'importance of consumption in utility'
+  default 1;
+param A_VAL 'Calibration factor for terminal value function'
+  default 1;
+param A_INV 'Calibration factor for investment'
+  default 1;
+param A_MED 'Calibration factor for intermediate bundle'
+  default 1;
 param  REG_WGHT 'regional (population) weights' {r in Regions}
   default 1 / card(Regions);
 #-----------Share parameters in the aggregators for utility and production.
@@ -521,7 +560,7 @@ var E_out_CES 'Constant Elasticity of Substitution output transformation'
     SHR_KAP_OUT_CES[r, i]
       * (kap[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT
     + SHR_LAB_OUT_CES[r, i]
-      * (lab[r, i, t] * ALPHA * ALPHA_0 ** t) ** RHO_OUT 
+      * (lab[r, i, t] * ALPHA * ALPHA_0 ** (t + 1)) ** RHO_OUT 
     + SHR_MED_OUT_CES[r, i]
       * (med_sec_CES[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT
     ) ** (RHO_OUT_HAT * SCALE_OUT);
@@ -823,12 +862,6 @@ read table rdcm;
 table rycm IN "amplcsv"
 (datadir & "RAW_YPO_CMED.csv"): [index0, index1, index2], RAW_YPO_CMED;
 read table rycm;
-table smr IN "amplcsv"
-(datadir & "SHR_MED_ROW.csv"): [index0, index1, index2], SHR_MED_ROW;
-read table smr;
-table smc IN "amplcsv"
-(datadir & "SHR_MED_COL.csv"): [index0, index1, index2], SHR_MED_COL;
-read table smc;
 #-----------------------------------------------------------------------------#
 # two indices: regions and sectors
 #-----------------------------------------------------------------------------#
@@ -862,18 +895,25 @@ read table rxjo;
 table rdjo IN "amplcsv"
 (datadir & "RAW_DOM_JOUT.csv"): [index0, index1], RAW_DOM_JOUT;
 read table rdjo;
-table rors IN "amplcsv"
-(datadir & "RAW_OUT_REG_SEC.csv"): [index0, index1], RAW_OUT_REG_SEC;
-read table rors;
+table smr IN "amplcsv"
+(datadir & "SHR_MED_ROW.csv"): [index0, index1, index2], SHR_MED_ROW;
+read table smr;
+table smc IN "amplcsv"
+(datadir & "SHR_MED_COL.csv"): [index0, index1, index2], SHR_MED_COL;
+read table smc;
 display RAW_MED_OUT;
 #------------------------------------------------------------------------------
 #-----------set the horizon and length of paths
 #------------------------------------------------------------------------------
 let LSup := 15;
-let PSup := 105;
+let PSup := 36;
 #------------------------------------------------------------------------------
 #-----------opportunity to tune the calibration factors (still part of data)
 #------------------------------------------------------------------------------
+let ALPHA := 1;#271828182846e-11;
+let ALPHA_0 := 1;#271828182846e-11;
+let ALPHA := 105828182846e-11 ** (70 + 1);
+let ALPHA_0 := 105828182846e-11;
 let BETA := 950e-3;
 #param aA := 094e-2;
 #param c20A := 090e-2;
@@ -889,70 +929,24 @@ for {i in Sectors}{
 #  let A[i] := 015e-2;
   let A[i] :=
     (SHR_MED_ROW['GLD', i, i]
-      / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT) / RHO_OUT)
-      * SCALE_OUT ** (1 / RHO_OUT)
-    + 2 * RAW_OUT_REG_SEC['GLD', i]
-      / sum{j in Sectors} RAW_OUT_REG_SEC['GLD', j];
+     / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT) / RHO_OUT)
+    * SCALE_OUT ** (1 / RHO_OUT);
   let EPS_JOUT['GLD', i] := 10e-2;
   for {j in Sectors}{
   let EPS_CMED['GLD', i, j] := 10e-2;
   };
 };
-#-----------------------------------------------------------------------------#
-# initial kap and growth factor if starting from a future point in time
-#-----------------------------------------------------------------------------#
-let ALPHA := 1;#271828182846e-11;
-let ALPHA_0 := 1;#271828182846e-11;
-let ALPHA := 101828182846e-11 ** 105;
-let ALPHA_0 := 101828182846e-11;
-load amplxl.dll;
-let datadir := "ampl/data/";
-table kapxl IN "amplxl"
-  (datadir & "KAP-105-fin" & ".xlsx") "Sheet1":
-#  (datadir & "KAP-71-A15-PHI0-ALPHA1058" & ".xlsx") "Sheet1":
-  [Regions, Sectors, PathTimes], KAP;
-read table kapxl; #table inkap IN "amplcsv"
-# to continue the previous loop
-#for {r in Regions, i in Sectors} let KAP[r, i, 0] := KAP[r, i, 36];
-#(datadir & "KAP.csv"): [Regions, Sectors, PathTimes], KAP;
-#read table inkap;
-
-#-----------------------------------------------------------------------------#
-# initial kap and growth factor if starting from scratch (comment out otherwise)
-#-----------------------------------------------------------------------------#
-#let ALPHA := 101828182846e-11;
-#let ALPHA_0 := 101828182846e-11;
-#for {r in Regions, i in Sectors}{
-#  let KAP[r, i, PInf]
-#    := 1;
-#    := RAW_KAP_OUT[r, i] / sum{j in Sectors} RAW_KAP_OUT[r, j]
-#      + RAW_OUT_REG_SEC[r, i] / sum{j in Sectors} RAW_OUT_REG_SEC[r, j]
-#      + 50e-2
-#      ;
-#};
-display KAP;
-#-----------------------------------------------------------------------------#
 # regionalisation
-#-----------------------------------------------------------------------------#
-# no shock
-#-----------------------------------------------------------------------------#
-#let A['C'] := 120e-2;
-#let A['M'] := 130e-2;
-let A['L'] := 070e-2;
-let A['K'] := 070e-2;
-let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
+#let A['C'] := 030e-2;
+#let A['M'] := 025e-2;
+let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 2; 
 let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 130e-2;
 let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
 let RAW_YPO_CMED['GLD', 'B', 'C'] := RAW_YPO_CMED['GLD', 'B', 'C'] * 130e-2;
-#-----------------------------------------------------------------------------#
-# the shock
-#-----------------------------------------------------------------------------#
-#let A['C'] := A['C'] * 080e-2;
-#let RAW_XPO_JOUT['GLD', 'C'] := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
-#let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
-#let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
-#let KAP['GLD', 'C', 0] := KAP['GLD', 'C', 0] * 3 / 4;
 display A;
+#for {r in Regions, i in Sectors}{
+#  let KAP[r, i, PInf] := 1e+1 * SHR_KAP_OUT_CES[r, i];
+#};
 #let A['B'] := 50e-2;
 #let KAP['GLD', 'B', 0] := 200e-2;
 #let KAP['GLD', 'R', 0] := 20e-2;
@@ -961,20 +955,20 @@ display A;
 #let KAP['GLD', 'H', 0] := 50e-2;
 #let KAP['GLD', 'P', 0] := 50e-2;
 let A_CON := 09000e-2; #increase this to increase labour and consumption
-let A_INV := 0090e-2;
+let A_INV := 0040e-2;
 let A_MED := 0010e-2;
 let A_VAL := 0001e-2;
 let A_LAB_EXT := -0545e-2;
 #let A_CMED := 1;
 let TAIL_SHR_CON := 050e-2;
 
-let EPS_INV := 0300e-3;
-let EPS_MED := 0400e-3;
+let EPS_INV := 0400e-3;
+let EPS_MED := 0560e-3;
 let EPS_CON := 0999e-3;
 let EPS_OUT := 0800e-3;
 let EPS_LAB := 050e-2;
 
-let SCALE_CON := 300e-3;
+let SCALE_CON := 200e-3;
 let SCALE_INV := 999e-3;
 let SCALE_MED := 999e-3;
 let SCALE_OUT := 999e-3;
@@ -991,6 +985,18 @@ for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
   if SHR_MED_CES[r, i, j] < 1e-12 then
     fix dmed[r, i, j, t] := 0;
 };
+#-----------------------------------------------------------------------------#
+# initial KAP
+#-----------------------------------------------------------------------------#
+load amplxl.dll;
+let datadir := "ampl/data/";
+table kapxl IN "amplxl"
+  (datadir & "KAP-71-A15-PHI0-ALPHA1058" & ".xlsx") "Sheet1":
+  [Regions, Sectors, PathTimes], KAP;
+read table kapxl; #table inkap IN "amplcsv"
+#(datadir & "KAP.csv"): [Regions, Sectors, PathTimes], KAP;
+#read table inkap;
+display KAP;
 update data;
 param CH_GROWTH_OUT {Regions, Sectors, PathTimes} default 0;
 param nwshr 'Alternative share parameter'
@@ -1017,85 +1023,6 @@ option show_stats 1;
 #=============================================================================#
 # setup for output of results
 #=============================================================================#
-#==============================================================================
-#-----------parameters for storing (observable) path values
-#==============================================================================
-param CON 'observed consumption' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param INV_SEC 'observed investment' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param INV_SUM 'observed total investment' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup); 
-param MED_SUM 'observed total intermediate flows' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup); 
-param LAB 'observed labour' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param LAB_EXT 'observed laborforce participation' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param E_OUT 'observed Exp. output' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup); 
-param ADJ_COST_KAP 'observed adjustment costs of kapital'
-  {Regions, Sectors, PathTimes} default 0; # in [0, OSup);
-param MKT_CLR 'observed output' {Sectors, PathTimes}
-  default 0; # in (-1e-4, 1e-4); 
-param DUAL_KAP 'lagrange multiplier for kapital accumulation'
-  {Regions, Sectors, PathTimes} default 1e+0; # in (-OSup, OSup);
-param DUAL_MKT_CLR 'lagrange multiplier for market clearing constraint'
-  {Sectors, PathTimes} default 1e+0;# in [0, OSup);
-param GROWTH_KAP 'observed growth rate for kapital'
-  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
-param GROWTH_OUT 'observed growth rate for output'
-  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
-param EULER_INTEGRAND 'Euler error integrand'
-  {Regions, Sectors, PathTimesClosure} default 1; # in (-OSup, OSup);
-param EULER_RATIO 'Expected Euler ratio'
-  {Regions, Sectors, PathTimes} default 1; # in (-1e+2, 1e+2);
-param DOM 'actual path values for domestic output'
-  {Regions, Sectors, PathTimes}
-  default 100e-2;
-param XPO 'actual path values for exports'
-  {Regions, Sectors, PathTimes}
-  default 100e-2;
-param YMED_CSUM 'actual path values for sum over a row of intermediate imports'
-  {Regions, Sectors, PathTimes}
-  default 100e-2;
-param CMED_SEC 'actual path values for intermediate input aggregator'
-  {Regions, Sectors, PathTimes}
-  default 100e-2;
-param MPROD_FAC 'marginal product factor (just output in the Cobb--Doug case)'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = SCALE_OUT * A[i] * (A[i] / E_OUT[r, i, s]) ** (RHO_OUT / SCALE_OUT - 1);
-param MPKK 'marginal product of kapital'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = MPROD_FAC[r, i, s] * SHR_KAP_OUT[r, i] * KAP[r, i, s] ** (RHO_OUT );
-param MPMM 'marginal product of intermediate (the aggregator)'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = MPROD_FAC[r, i, s] * SHR_MED_OUT[r, i]
-    * CMED_SEC[r, i, s] ** (RHO_OUT );
-param MPLL 'marginal product of labour'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = E_OUT[r, i, s] - MPKK[r, i, s] - MPMM[r, i, s];
-param GVA 'gross value added'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = MPKK[r, i, s] + MPLL[r, i, s];
-param VERT_BAL 'vertical balance (should be zero)'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = E_OUT[r, i, s] - GVA[r, i, s] - MPMM[r, i, s];
-param AGG_OUT 'aggregate output per period'
-  {r in Regions, s in PathTimes}
-  = sum{i in Sectors} E_OUT[r, i, s];
-param AGG_KAP 'aggregate kapital per period'
-  {r in Regions, s in PathTimes}
-  = sum{i in Sectors} KAP[r, i, s];
-param AGG_CON 'aggregate consumption per period'
-  {r in Regions, s in PathTimes}
-  = sum{i in Sectors} CON[r, i, s];
-param AGG_XPO 'aggregate exports per period'
-  {r in Regions, s in PathTimes}
-  = sum{i in Sectors} XPO[r, i, s];
-param AGG_YMED_CSUM 'aggregate imports indirect alloc. (column sum) per period'
-  {r in Regions, s in PathTimes}
-  = sum{i in Sectors} YMED_CSUM[r, i, s];
 param experiment symbolic;
 param shock symbolic;
 param reg symbolic;
@@ -1104,13 +1031,10 @@ let shock := "shock";
 let reg := "aus";
 let outputdir := ("ampl/output/" & reg & shock & "/");
 # declare output tables
-table res OUT "amplxl" (outputdir & "Results-fin.xlsx") "Results":
+table res OUT "amplxl" (outputdir & "Results.xlsx") "Results":
   [Regions, Sectors, PathTimes],
-  KAP, E_OUT, CON, XPO, YMED_CSUM, GROWTH_KAP, GROWTH_OUT,
+  KAP, E_OUT, CON, XPO, YMED_SUM, GROWTH_KAP, GROWTH_OUT,
   EULER_INTEGRAND, EULER_RATIO;
-table aggres OUT "amplxl" (outputdir & "Results-fin.xlsx") "Results":
-  [Regions, PathTimes],
-  AGG_KAP, AGG_KAP, AGG_CON, AGG_XPO, AGG_YMED_CSUM;
 #=============================================================================#
 # the above model may be solved in isolation, but to solve a path issue the
 # command: "include gladpath.run" after instantiating this model

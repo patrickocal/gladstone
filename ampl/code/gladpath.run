@@ -1,3 +1,86 @@
+#==============================================================================
+#-----------parameters for storing (observable) path values
+#==============================================================================
+param CON 'observed consumption' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param INV_SEC 'observed investment' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param INV_SUM 'observed total investment' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param MED_SUM 'observed total intermediate flows' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param LAB 'observed labour' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param LAB_EXT 'observed laborforce participation' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup);
+param E_OUT 'observed Exp. output' {Regions, Sectors, PathTimes}
+  default 1e+0; # in (OInf, OSup); 
+param ADJ_COST_KAP 'observed adjustment costs of kapital'
+  {Regions, Sectors, PathTimes} default 0; # in [0, OSup);
+param MKT_CLR 'observed output' {Sectors, PathTimes}
+  default 0; # in (-1e-4, 1e-4); 
+param DUAL_KAP 'lagrange multiplier for kapital accumulation'
+  {Regions, Sectors, PathTimes} default 1e+0; # in (-OSup, OSup);
+param DUAL_MKT_CLR 'lagrange multiplier for market clearing constraint'
+  {Sectors, PathTimes} default 1e+0;# in [0, OSup);
+param GROWTH_KAP 'observed growth rate for kapital'
+  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
+param GROWTH_OUT 'observed growth rate for output'
+  {Regions, Sectors, PathTimes} default 5e-2; # in (-1, 1);
+param EULER_INTEGRAND 'Euler error integrand'
+  {Regions, Sectors, PathTimesClosure} default 1; # in (-OSup, OSup);
+param EULER_RATIO 'Expected Euler ratio'
+  {Regions, Sectors, PathTimes} default 1; # in (-1e+2, 1e+2);
+param DOM 'actual path values for domestic output'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param XPO 'actual path values for exports'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param YMED_CSUM 'actual path values for sum over a row of intermediate imports'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param CMED_SEC 'actual path values for intermediate input aggregator'
+  {Regions, Sectors, PathTimes}
+  default 100e-2;
+param MPROD_FAC 'marginal product factor (just output in the Cobb--Doug case)'
+  {r in Regions, i in Sectors, s in PathTimes}
+  #= SCALE_OUT * A[i] * (A[i] / E_OUT[r, i, s]) ** (RHO_OUT / SCALE_OUT - 1);
+  default 1;
+param MPKK 'marginal product of kapital'
+  {r in Regions, i in Sectors, s in PathTimes}
+  #= MPROD_FAC[r, i, s] * SHR_KAP_OUT_CES[r, i] * KAP[r, i, s] ** (RHO_OUT );
+  default 1;
+param MPLL 'marginal product of labour'
+  {r in Regions, i in Sectors, s in PathTimes}
+  #= MPROD_FAC[r, i, s] * SHR_LAB_OUT_CES[r, i] * LAB[r, i, s] ** (RHO_OUT );
+  default 1;
+param MPMM 'marginal product of intermediate (the aggregator)'
+  {r in Regions, i in Sectors, s in PathTimes}
+  #= MPROD_FAC[r, i, s] * SHR_MED_OUT_CES[r, i]
+  #  * CMED_SEC[r, i, s] ** (RHO_OUT );
+  default 1;
+param GVA 'gross value added'
+  {r in Regions, i in Sectors, s in PathTimes}
+  = MPKK[r, i, s] + MPLL[r, i, s];
+param VERT_BAL 'vertical balance (should be zero)'
+  {r in Regions, i in Sectors, s in PathTimes}
+  = E_OUT[r, i, s] - GVA[r, i, s] - MPMM[r, i, s];
+param AGG_OUT 'aggregate output per period'
+  {r in Regions, s in PathTimes}
+  = sum{i in Sectors} E_OUT[r, i, s];
+param AGG_KAP 'aggregate kapital per period'
+  {r in Regions, s in PathTimes}
+  = sum{i in Sectors} KAP[r, i, s];
+param AGG_CON 'aggregate consumption per period'
+  {r in Regions, s in PathTimes}
+  = sum{i in Sectors} CON[r, i, s];
+param AGG_XPO 'aggregate exports per period'
+  {r in Regions, s in PathTimes}
+  = sum{i in Sectors} XPO[r, i, s];
+param AGG_YMED_CSUM 'aggregate imports indirect alloc. (column sum) per period'
+  {r in Regions, s in PathTimes}
+  = sum{i in Sectors} YMED_CSUM[r, i, s];
 #-----------solve the model along a given path
 for {s in PathTimes}{
   display s, ctime();
@@ -66,7 +149,13 @@ for {s in PathTimes}{
     let KAP[r, i, s + 1] := kap[r, i, LInf + 1];
     let DUAL_KAP[r, i, s] := kap_transition[r, i, LInf];
     let XPO[r, i, s] := xpo[r, i, LInf];
-    let YMED_SUM[r, i, s] := sum{j in Sectors} ymed[r, i, j, LInf];
+    let YMED_CSUM[r, i, s] := sum{j in Sectors} ymed[r, i, j, LInf];
+    let CMED_SEC[r, i, s] := cmed_sec_CES[r, i, LInf];
+    let MPROD_FAC[r, i, s] := mprod_fac[r, i, LInf];
+    let MPKK[r, i, s] := mpkk[r, i, LInf];
+    let MPLL[r, i, s] := mpll[r, i, LInf];
+    let MPMM[r, i, s] := mpmm[r, i, LInf];
+    let 
   };
 #    let TAIL_SHR_CON := (sum{r in Regions, i in Sectors} CON[r, i, s])
 #      / (sum{r in Regions, i in Sectors} E_OUT[r, i, s]);
@@ -113,6 +202,7 @@ for {s in PathTimes}{
   };
 
    write table res;
+   write table aggres;
 #  write table kp;
   display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
     min{r in Regions, i in Sectors} E_OUT[r, i, s],

@@ -521,9 +521,11 @@ var E_out_CES 'Constant Elasticity of Substitution output transformation'
     SHR_KAP_OUT_CES[r, i]
       * (kap[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT
     + SHR_LAB_OUT_CES[r, i]
-      * (lab[r, i, t] * ALPHA * ALPHA_0 ** t) ** RHO_OUT 
+      * (lab[r, i, t] ) ** RHO_OUT 
     + SHR_MED_OUT_CES[r, i]
       * (med_sec_CES[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT
+    + 1
+      * (33e-2 * ALPHA * ALPHA_0 ** t) ** RHO_OUT
     ) ** (RHO_OUT_HAT * SCALE_OUT);
 var E_cout_CES 'Constant Elasticity of Substitution output transformation'
   {r in Regions, i in Sectors, t in LookForward}
@@ -531,9 +533,11 @@ var E_cout_CES 'Constant Elasticity of Substitution output transformation'
     SHR_KAP_OUT_CES[r, i]
       * (kap[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT
     + SHR_LAB_OUT_CES[r, i]
-      * (lab[r, i, t] * ALPHA * ALPHA_0 ** (t + 1)) ** RHO_OUT 
+      * (lab[r, i, t] ) ** RHO_OUT 
     + SHR_MED_OUT_CES[r, i]
       * (cmed_sec_CES[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT
+    + 1
+      * (33e-2 * ALPHA * ALPHA_0 ** t) ** RHO_OUT
     ) ** (RHO_OUT_HAT * SCALE_OUT);
 #-----------variety of utility functions
 var utility_CD 'Cobb--Douglas instantaneous utility'
@@ -596,7 +600,7 @@ var cutility_CD_caveF 'Cobb-Douglas-Leontief and concave Frisch inst. utility'
       REG_WGHT[r] * (
         A_CON * ccon_sec_CD[r, t]
         + A_LAB_EXT * lab_ext_sec[r, t]
-        + A_LAB[r, t] * lab_sec_caveF[r, t]
+      #  + A_LAB[r, t] * lab_sec_caveF[r, t]
       );
 #-----------variety of tail or terminal value functions
 var tail_val_CD_F 'continuation value from time LSup + LInf onwards'
@@ -668,7 +672,8 @@ var tail_val_CDutl_caveF_CESout
     prod{i in Sectors} (TAIL_SHR_CON * A[i] * (
       SHR_KAP_OUT_CES[r, i] * kap[r, i, LSup + LInf] ** RHO_OUT
       + SHR_MED_OUT_CES[r, i] * 1 ** RHO_OUT
-      + SHR_LAB_OUT_CES[r, i] * (1 * ALPHA * ALPHA_0 ** (LSup + LInf)) ** RHO_OUT
+      + SHR_LAB_OUT_CES[r, i] * (1 ) ** RHO_OUT
+      + 1 * (33e-2 * ALPHA * ALPHA_0 ** (LSup + LInf)) ** RHO_OUT
     ) ** (RHO_OUT_HAT * SCALE_OUT)
     ) ** (SHR_CON[r, i] * SCALE_CON)
     )
@@ -731,6 +736,23 @@ subject to market_clearing 'market clearing for each sector and time'
       + adj_cost_kap[r, i, t]
       - dom[r, i , t] 
       ) = 0;
+var mprod_fac
+  {r in Regions, i in Sectors, t in LookForward}
+  = SCALE_OUT * A[i] * (A[i] / E_out[r, i, t]) ** (RHO_OUT / SCALE_OUT - 1);
+var mpkk
+  {r in Regions, i in Sectors, t in LookForward}
+  = mprod_fac[r, i, t] * SHR_KAP_OUT[r, i] * kap[r, i, t] ** (RHO_OUT );
+var mpmm
+  {r in Regions, i in Sectors, t in LookForward}
+  = mprod_fac[r, i, t] * SHR_MED_OUT[r, i]
+    * cmed_sec_CES[r, i, t] ** (RHO_OUT );
+var mpll
+  {r in Regions, i in Sectors, t in LookForward}
+  = mprod_fac[r, i, t] * SHR_LAB_OUT[r, i] * lab[r, i, t] ** (RHO_OUT );
+subject to vertical_balance
+  {r in Regions, i in Sectors, t in LookForward}:
+  E_out[r, i, t] >= mpkk[r, i, t] + mpmm[r, i, t] + mpll[r, i, t];
+
 #subject to jacobi_id 'Intertemporal constraints on investment'
 #  {r in Regions, i in Sectors, j in Sectors, t in LookForward
 #    ii in Sectors: 1 < ord(j) and i <> j}:
@@ -887,11 +909,11 @@ for {i in Sectors}{
   let DELTA[i] := 05e-2;
   let PHI_ADJ[i] := 400e-2;
 #  let A[i] := 015e-2;
-  let A[i] :=
+  let A[i] := 2e+1 +
     (SHR_MED_ROW['GLD', i, i]
       / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT) / RHO_OUT)
       * SCALE_OUT ** (1 / RHO_OUT)
-    + 2 * RAW_OUT_REG_SEC['GLD', i]
+    + 8 * RAW_OUT_REG_SEC['GLD', i]
       / sum{j in Sectors} RAW_OUT_REG_SEC['GLD', j];
   let EPS_JOUT['GLD', i] := 10e-2;
   for {j in Sectors}{
@@ -920,16 +942,16 @@ read table kapxl; #table inkap IN "amplcsv"
 #-----------------------------------------------------------------------------#
 # initial kap and growth factor if starting from scratch (comment out otherwise)
 #-----------------------------------------------------------------------------#
-#let ALPHA := 101828182846e-11;
-#let ALPHA_0 := 101828182846e-11;
-#for {r in Regions, i in Sectors}{
-#  let KAP[r, i, PInf]
-#    := 1;
+let ALPHA := 101828182846e-11;
+let ALPHA_0 := 101828182846e-11;
+for {r in Regions, i in Sectors}{
+  let KAP[r, i, PInf]
+    := 1;
 #    := RAW_KAP_OUT[r, i] / sum{j in Sectors} RAW_KAP_OUT[r, j]
 #      + RAW_OUT_REG_SEC[r, i] / sum{j in Sectors} RAW_OUT_REG_SEC[r, j]
 #      + 50e-2
 #      ;
-#};
+};
 display KAP;
 #-----------------------------------------------------------------------------#
 # regionalisation
@@ -938,8 +960,8 @@ display KAP;
 #-----------------------------------------------------------------------------#
 #let A['C'] := 120e-2;
 #let A['M'] := 130e-2;
-let A['L'] := 070e-2;
-let A['K'] := 070e-2;
+let A['L'] := 070e-2 * A['L'];
+let A['K'] := 070e-2 * A['K'];
 let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
 let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 130e-2;
 let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
@@ -960,7 +982,7 @@ display A;
 #let KAP['GLD', 'N', 0] := 40e-2;
 #let KAP['GLD', 'H', 0] := 50e-2;
 #let KAP['GLD', 'P', 0] := 50e-2;
-let A_CON := 09000e-2; #increase this to increase labour and consumption
+let A_CON := 00100e-2; #increase this to increase labour and consumption
 let A_INV := 0090e-2;
 let A_MED := 0010e-2;
 let A_VAL := 0001e-2;
@@ -982,8 +1004,8 @@ let SCALE_LAB := 600e-2;
 let SCALE_CMED := 990e-3;
 let SCALE_CINV := 990e-3;
 for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
-  fix lab[r, j, t] := 33e-2;
-  #fix lab_ext[r, j, t] := 100e-2;
+#  fix lab[r, j, t] := 33e-2;
+  fix lab_ext[r, j, t] := 100e-2;
   let NAIRE[r, j, t] := 95e-2;
   let EXP_LAB_EXT[r, j, t] := 2;
   if SHR_INV_CES[r, i, j] < 1e-12 then
@@ -1100,17 +1122,17 @@ param experiment symbolic;
 param shock symbolic;
 param reg symbolic;
 #option solver conopt;
-let shock := "shock";
+let shock := "historic";
 let reg := "aus";
 let outputdir := ("ampl/output/" & reg & shock & "/");
 # declare output tables
-table res OUT "amplxl" (outputdir & "Results-fin.xlsx") "Results":
+table res OUT "amplxl" (outputdir & "burn-in-8.xlsx") "Results":
   [Regions, Sectors, PathTimes],
   KAP, E_OUT, CON, XPO, YMED_CSUM, GROWTH_KAP, GROWTH_OUT,
   EULER_INTEGRAND, EULER_RATIO;
-table aggres OUT "amplxl" (outputdir & "Results-fin.xlsx") "Results":
+table aggres OUT "amplxl" (outputdir & "agg-burn-in-8.xlsx") "Results":
   [Regions, PathTimes],
-  AGG_KAP, AGG_KAP, AGG_CON, AGG_XPO, AGG_YMED_CSUM;
+  AGG_KAP, AGG_CON, AGG_XPO, AGG_YMED_CSUM;
 #=============================================================================#
 # the above model may be solved in isolation, but to solve a path issue the
 # command: "include gladpath.run" after instantiating this model
