@@ -999,17 +999,7 @@ let BETA := 950e-3;
 for {i in Sectors}{
   let DELTA[i] := 05e-2;
   let PHI_ADJ[i] := 400e-2;
-  let A[i] := 3e+1
-    + (SHR_MED_ROW['GLD', i, i]
-      / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT) / RHO_OUT)
-      * SCALE_OUT ** (1 / RHO_OUT)
-    + 4 * RAW_OUT_REG_SEC['GLD', i]
-      / sum{j in Sectors} RAW_OUT_REG_SEC['GLD', j];
-  let EPS_JOUT['GLD', i] := 10e-2;
-  for {j in Sectors}{
-  let EPS_CMED['GLD', i, j] := 10e-2;
   #let A[i] := 111e-1;
-  };
 };
 let A_CON := 00100e-2; #increase this to increase labour and consumption
 let A_INV := 0090e-2;
@@ -1042,11 +1032,23 @@ for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
 };
 let SHR_EFF_OUT := 8e-1;
 let ALPHA_0 := 101828182846e-11;
-#-----------------------------------------------------------------------------#
+#=============================================================================#
 # regionalisation
 #-----------------------------------------------------------------------------#
 # no shock
-#-----------------------------------------------------------------------------#
+#=============================================================================#
+for {i in Sectors}{
+  let A[i] := 3e+1
+    + (SHR_MED_ROW['GLD', i, i]
+      / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT) / RHO_OUT)
+      * SCALE_OUT ** (1 / RHO_OUT)
+    + 4 * RAW_OUT_REG_SEC['GLD', i]
+      / sum{j in Sectors} RAW_OUT_REG_SEC['GLD', j];
+  let EPS_JOUT['GLD', i] := 10e-2;
+  for {j in Sectors}{
+  let EPS_CMED['GLD', i, j] := 10e-2;
+  };
+};
 #let A['C'] := 130e-2 * A['C'];
 #let A['M'] := 130e-2;
 let A['D'] := 070e-2 * A['D'];
@@ -1068,6 +1070,7 @@ display A;
 #let KAP['GLD', 'N', 0] := 40e-2;
 #let KAP['GLD', 'H', 0] := 50e-2;
 #let KAP['GLD', 'P', 0] := 50e-2;
+#=============================================================================#
 update data;
 param CH_GROWTH_OUT {Regions, Sectors, PathTimes} default 0;
 param nwshr 'Alternative share parameter'
