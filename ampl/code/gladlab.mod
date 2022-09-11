@@ -1024,6 +1024,7 @@ let SCALE_CMED := 990e-3;
 let SCALE_CINV := 990e-3;
 for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
 #  fix lab[r, j, t] := 33e-2;
+  fix E_out[r, 'B', t] := 
   fix lab_ext[r, j, t] := 100e-2;
   if SHR_INV_CES[r, i, j] < 1e-12 then
     fix dinv[r, i, j, t] := 0;

@@ -8,9 +8,9 @@ let PSup := 105;
 #=============================================================================#
 let outputdir := "ampl/output/";
 #option solver conopt;
-let shock := "shock";
+let shock := "noshock";
 let reg := "aus";
-let filename := ("gladlab-" & PInf & "-reregionalised-noshocktoB" & shock);
+let filename := ("gladlab-" & PInf & "-rereg-Bpricefix-" & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
 # declare output tables
