@@ -1,0 +1,384 @@
+ctime() = 'Wed Sep 14 12:06:35 2022'
+_ampl_elapsed_time = 25.3863
+_total_solve_time = 7.34741
+_total_solve_system_time = 0.047871
+_total_solve_user_time = 7.29954
+
+ctime() = 'Wed Sep 14 12:09:20 2022'
+_ampl_elapsed_time = 1.71602
+_total_solve_time = 7.26672
+_total_solve_system_time = 0.047691
+_total_solve_user_time = 7.21903
+
+ctime() = 'Wed Sep 14 12:09:41 2022'
+_ampl_elapsed_time = 3.77901
+_total_solve_time = 26.45
+_total_solve_system_time = 0.160338
+_total_solve_user_time = 26.2897
+
+ctime() = 'Wed Sep 14 12:09:47 2022'
+_ampl_elapsed_time = 4.04172
+_total_solve_time = 32.2642
+_total_solve_system_time = 0.236007
+_total_solve_user_time = 32.0282
+
+ctime() = 'Wed Sep 14 12:09:53 2022'
+_ampl_elapsed_time = 4.30338
+_total_solve_time = 37.9556
+_total_solve_system_time = 0.303543
+_total_solve_user_time = 37.6521
+
+ctime() = 'Wed Sep 14 12:10:14 2022'
+_ampl_elapsed_time = 4.60848
+_total_solve_time = 58.6824
+_total_solve_system_time = 0.419898
+_total_solve_user_time = 58.2625
+
+ctime() = 'Wed Sep 14 12:11:22 2022'
+_ampl_elapsed_time = 4.91296
+_total_solve_time = 126.346
+_total_solve_system_time = 0.673663
+_total_solve_user_time = 125.673
+
+ctime() = 'Wed Sep 14 12:13:17 2022'
+_ampl_elapsed_time = 5.24827
+_total_solve_time = 241.376
+_total_solve_system_time = 1.01475
+_total_solve_user_time = 240.361
+
+ctime() = 'Wed Sep 14 12:15:19 2022'
+_ampl_elapsed_time = 5.58695
+_total_solve_time = 362.648
+_total_solve_system_time = 1.49877
+_total_solve_user_time = 361.149
+
+ctime() = 'Wed Sep 14 12:15:25 2022'
+_ampl_elapsed_time = 6.03793
+_total_solve_time = 368.48
+_total_solve_system_time = 1.58026
+_total_solve_user_time = 366.9
+
+ctime() = 'Wed Sep 14 12:15:33 2022'
+_ampl_elapsed_time = 6.50446
+_total_solve_time = 375.125
+_total_solve_system_time = 1.67083
+_total_solve_user_time = 373.454
+
+ctime() = 'Wed Sep 14 12:15:39 2022'
+_ampl_elapsed_time = 7.0048
+_total_solve_time = 380.921
+_total_solve_system_time = 1.74626
+_total_solve_user_time = 379.174
+
+ctime() = 'Wed Sep 14 12:15:45 2022'
+_ampl_elapsed_time = 7.402
+_total_solve_time = 386.684
+_total_solve_system_time = 1.81564
+_total_solve_user_time = 384.868
+
+ctime() = 'Wed Sep 14 12:15:52 2022'
+_ampl_elapsed_time = 7.8096
+_total_solve_time = 393.182
+_total_solve_system_time = 1.88911
+_total_solve_user_time = 391.293
+
+ctime() = 'Wed Sep 14 12:16:05 2022'
+_ampl_elapsed_time = 8.23887
+_total_solve_time = 405.758
+_total_solve_system_time = 1.98496
+_total_solve_user_time = 403.774
+
+ctime() = 'Wed Sep 14 12:16:11 2022'
+_ampl_elapsed_time = 8.70991
+_total_solve_time = 411.716
+_total_solve_system_time = 2.06017
+_total_solve_user_time = 409.656
+
+ctime() = 'Wed Sep 14 12:16:43 2022'
+_ampl_elapsed_time = 9.18891
+_total_solve_time = 442.454
+_total_solve_system_time = 2.21112
+_total_solve_user_time = 440.243
+
+ctime() = 'Wed Sep 14 12:17:00 2022'
+_ampl_elapsed_time = 9.67992
+_total_solve_time = 459.793
+_total_solve_system_time = 2.33932
+_total_solve_user_time = 457.454
+
+ctime() = 'Wed Sep 14 12:17:17 2022'
+_ampl_elapsed_time = 10.1413
+_total_solve_time = 476.265
+_total_solve_system_time = 2.44428
+_total_solve_user_time = 473.821
+
+ctime() = 'Wed Sep 14 12:17:30 2022'
+_ampl_elapsed_time = 10.6342
+_total_solve_time = 488.703
+_total_solve_system_time = 2.53344
+_total_solve_user_time = 486.17
+
+ctime() = 'Wed Sep 14 12:17:37 2022'
+_ampl_elapsed_time = 11.1166
+_total_solve_time = 494.646
+_total_solve_system_time = 2.61567
+_total_solve_user_time = 492.03
+
+ctime() = 'Wed Sep 14 12:19:13 2022'
+_ampl_elapsed_time = 11.5799
+_total_solve_time = 590.7
+_total_solve_system_time = 2.92183
+_total_solve_user_time = 587.778
+
+ctime() = 'Wed Sep 14 12:19:33 2022'
+_ampl_elapsed_time = 12.0841
+_total_solve_time = 609.975
+_total_solve_system_time = 3.03026
+_total_solve_user_time = 606.945
+
+ctime() = 'Wed Sep 14 12:19:41 2022'
+_ampl_elapsed_time = 12.5958
+_total_solve_time = 616.93
+_total_solve_system_time = 3.11329
+_total_solve_user_time = 613.817
+
+ctime() = 'Wed Sep 14 12:22:40 2022'
+_ampl_elapsed_time = 13.1525
+_total_solve_time = 795.081
+_total_solve_system_time = 4.0811
+_total_solve_user_time = 791
+
+ctime() = 'Wed Sep 14 12:23:07 2022'
+_ampl_elapsed_time = 13.7708
+_total_solve_time = 821.468
+_total_solve_system_time = 4.2278
+_total_solve_user_time = 817.24
+
+ctime() = 'Wed Sep 14 12:23:35 2022'
+_ampl_elapsed_time = 14.2891
+_total_solve_time = 848.403
+_total_solve_system_time = 4.35754
+_total_solve_user_time = 844.045
+
+ctime() = 'Wed Sep 14 12:25:59 2022'
+_ampl_elapsed_time = 14.8168
+_total_solve_time = 992.179
+_total_solve_system_time = 4.88881
+_total_solve_user_time = 987.291
+
+ctime() = 'Wed Sep 14 12:26:25 2022'
+_ampl_elapsed_time = 15.3725
+_total_solve_time = 1017.62
+_total_solve_system_time = 5.01302
+_total_solve_user_time = 1012.61
+
+ctime() = 'Wed Sep 14 12:26:42 2022'
+_ampl_elapsed_time = 15.9001
+_total_solve_time = 1033.78
+_total_solve_system_time = 5.14116
+_total_solve_user_time = 1028.64
+
+ctime() = 'Wed Sep 14 12:27:01 2022'
+_ampl_elapsed_time = 16.4529
+_total_solve_time = 1052.22
+_total_solve_system_time = 5.2469
+_total_solve_user_time = 1046.97
+
+ctime() = 'Wed Sep 14 12:27:22 2022'
+_ampl_elapsed_time = 16.9923
+_total_solve_time = 1072.96
+_total_solve_system_time = 5.3596
+_total_solve_user_time = 1067.6
+
+ctime() = 'Wed Sep 14 12:30:15 2022'
+_ampl_elapsed_time = 17.5409
+_total_solve_time = 1245.2
+_total_solve_system_time = 5.85996
+_total_solve_user_time = 1239.34
+
+ctime() = 'Wed Sep 14 12:30:34 2022'
+_ampl_elapsed_time = 18.1125
+_total_solve_time = 1263.74
+_total_solve_system_time = 5.97986
+_total_solve_user_time = 1257.76
+
+ctime() = 'Wed Sep 14 12:32:18 2022'
+_ampl_elapsed_time = 18.7991
+_total_solve_time = 1366.68
+_total_solve_system_time = 6.33401
+_total_solve_user_time = 1360.35
+
+ctime() = 'Wed Sep 14 12:32:38 2022'
+_ampl_elapsed_time = 19.3718
+_total_solve_time = 1385.74
+_total_solve_system_time = 6.44241
+_total_solve_user_time = 1379.3
+
+ctime() = 'Wed Sep 14 12:33:04 2022'
+_ampl_elapsed_time = 19.9643
+_total_solve_time = 1411.49
+_total_solve_system_time = 6.56902
+_total_solve_user_time = 1404.92
+
+ctime() = 'Wed Sep 14 12:33:24 2022'
+_ampl_elapsed_time = 20.5572
+_total_solve_time = 1430.29
+_total_solve_system_time = 6.68483
+_total_solve_user_time = 1423.61
+
+ctime() = 'Wed Sep 14 12:33:34 2022'
+_ampl_elapsed_time = 21.1496
+_total_solve_time = 1440.14
+_total_solve_system_time = 6.77531
+_total_solve_user_time = 1433.37
+
+ctime() = 'Wed Sep 14 12:35:14 2022'
+_ampl_elapsed_time = 21.8078
+_total_solve_time = 1538.76
+_total_solve_system_time = 7.19117
+_total_solve_user_time = 1531.57
+
+ctime() = 'Wed Sep 14 12:35:28 2022'
+_ampl_elapsed_time = 22.4075
+_total_solve_time = 1552.31
+_total_solve_system_time = 7.30307
+_total_solve_user_time = 1545
+
+ctime() = 'Wed Sep 14 12:35:47 2022'
+_ampl_elapsed_time = 23.2388
+_total_solve_time = 1570.77
+_total_solve_system_time = 7.4672
+_total_solve_user_time = 1563.3
+
+ctime() = 'Wed Sep 14 12:36:08 2022'
+_ampl_elapsed_time = 23.8478
+_total_solve_time = 1591.29
+_total_solve_system_time = 7.58001
+_total_solve_user_time = 1583.71
+
+ctime() = 'Wed Sep 14 12:36:36 2022'
+_ampl_elapsed_time = 24.4651
+_total_solve_time = 1618.29
+_total_solve_system_time = 7.73431
+_total_solve_user_time = 1610.55
+
+ctime() = 'Wed Sep 14 12:36:45 2022'
+_ampl_elapsed_time = 25.0891
+_total_solve_time = 1626.93
+_total_solve_system_time = 7.81833
+_total_solve_user_time = 1619.11
+
+ctime() = 'Wed Sep 14 12:36:52 2022'
+_ampl_elapsed_time = 25.7691
+_total_solve_time = 1632.85
+_total_solve_system_time = 7.89937
+_total_solve_user_time = 1624.95
+
+ctime() = 'Wed Sep 14 12:37:07 2022'
+_ampl_elapsed_time = 26.4665
+_total_solve_time = 1646.99
+_total_solve_system_time = 7.99697
+_total_solve_user_time = 1638.99
+
+ctime() = 'Wed Sep 14 12:37:30 2022'
+_ampl_elapsed_time = 27.1176
+_total_solve_time = 1669.46
+_total_solve_system_time = 8.11366
+_total_solve_user_time = 1661.34
+
+ctime() = 'Wed Sep 14 12:42:15 2022'
+_ampl_elapsed_time = 27.7613
+_total_solve_time = 1953.63
+_total_solve_system_time = 9.01181
+_total_solve_user_time = 1944.61
+
+ctime() = 'Wed Sep 14 12:42:44 2022'
+_ampl_elapsed_time = 28.4144
+_total_solve_time = 1982.11
+_total_solve_system_time = 9.17257
+_total_solve_user_time = 1972.94
+
+ctime() = 'Wed Sep 14 12:47:38 2022'
+_ampl_elapsed_time = 29.0527
+_total_solve_time = 2275.1
+_total_solve_system_time = 10.0358
+_total_solve_user_time = 2265.06
+
+ctime() = 'Wed Sep 14 12:47:56 2022'
+_ampl_elapsed_time = 29.7248
+_total_solve_time = 2292.55
+_total_solve_system_time = 10.1548
+_total_solve_user_time = 2282.4
+
+ctime() = 'Wed Sep 14 12:49:27 2022'
+_ampl_elapsed_time = 30.3826
+_total_solve_time = 2382.66
+_total_solve_system_time = 10.5339
+_total_solve_user_time = 2372.12
+
+ctime() = 'Wed Sep 14 12:49:48 2022'
+_ampl_elapsed_time = 31.0374
+_total_solve_time = 2402.93
+_total_solve_system_time = 10.6545
+_total_solve_user_time = 2392.27
+
+ctime() = 'Wed Sep 14 12:50:05 2022'
+_ampl_elapsed_time = 31.7259
+_total_solve_time = 2418.52
+_total_solve_system_time = 10.7944
+_total_solve_user_time = 2407.73
+
+ctime() = 'Wed Sep 14 12:50:24 2022'
+_ampl_elapsed_time = 32.4289
+_total_solve_time = 2436.7
+_total_solve_system_time = 10.9323
+_total_solve_user_time = 2425.77
+
+ctime() = 'Wed Sep 14 12:50:39 2022'
+_ampl_elapsed_time = 33.1165
+_total_solve_time = 2451.56
+_total_solve_system_time = 11.0452
+_total_solve_user_time = 2440.52
+
+ctime() = 'Wed Sep 14 12:51:03 2022'
+_ampl_elapsed_time = 33.8248
+_total_solve_time = 2474.41
+_total_solve_system_time = 11.1888
+_total_solve_user_time = 2463.22
+
+ctime() = 'Wed Sep 14 12:51:21 2022'
+_ampl_elapsed_time = 34.5124
+_total_solve_time = 2492.06
+_total_solve_system_time = 11.3069
+_total_solve_user_time = 2480.75
+
+ctime() = 'Wed Sep 14 12:51:44 2022'
+_ampl_elapsed_time = 35.2169
+_total_solve_time = 2513.88
+_total_solve_system_time = 11.4267
+_total_solve_user_time = 2502.45
+
+ctime() = 'Wed Sep 14 12:52:06 2022'
+_ampl_elapsed_time = 35.9288
+_total_solve_time = 2535.63
+_total_solve_system_time = 11.565
+_total_solve_user_time = 2524.07
+
+ctime() = 'Wed Sep 14 12:52:29 2022'
+_ampl_elapsed_time = 36.6403
+_total_solve_time = 2557.28
+_total_solve_system_time = 11.6924
+_total_solve_user_time = 2545.59
+
+ctime() = 'Wed Sep 14 12:56:45 2022'
+_ampl_elapsed_time = 37.3703
+_total_solve_time = 2812.5
+_total_solve_system_time = 12.5456
+_total_solve_user_time = 2799.96
+
+ctime() = 'Wed Sep 14 12:57:04 2022'
+_ampl_elapsed_time = 38.0705
+_total_solve_time = 2830.41
+_total_solve_system_time = 12.6532
+_total_solve_user_time = 2817.76
+

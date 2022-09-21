@@ -1,16 +1,20 @@
 #=============================================================================#
 # initial and final period for PathTimes (the set over which we iterate)
 #=============================================================================#
-let PInf := 70;
-let PSup := 105;
+let PInf := 0;
+let PSup := 70;
+#=============================================================================#
+# are we solving or pulling in prior results? Comment out if solving:
+let toggle_sol := "previous";
 #=============================================================================#
 # setup for output of results
 #=============================================================================#
 let outputdir := "ampl/output/";
 #option solver conopt;
-let shock := "noshock";
+let shock := "historic";
 let reg := "aus";
-let filename := ("gladlab-" & PInf & "-rereg-Bpricefix-" & shock);
+let filename := ("gladlab-"
+                 & PInf & "-" & reg & "-EPS_OUT_C_700-" & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
 # declare output tables
@@ -27,6 +31,10 @@ table aggres OUT "amplxl"
   (outputdir & "agg-" & filename & ".xlsx") "Results":
   [Regions, PathTimes],
   AGG_KAP, AGG_OUT, AGG_CON, AGG_XPO, AGG_YMED_CSUM;
+table prcres OUT "amplxl"
+  (outputdir & "prc-" & filename & ".xlsx") "Results":
+  [Sectors, PathTimes],
+  PRC_DOM, DUAL_MKT_CLR;
 #-----------------------------------------------------------------------------#
 # initial kap and growth factor if starting from a future point in time
 #-----------------------------------------------------------------------------#
@@ -35,7 +43,9 @@ let datadir := "ampl/data/";
 table kapxl IN "amplxl"
   (datadir & "KAP-" & PInf & "-reregionalised" & ".xlsx") "Sheet1":
   [Regions, Sectors, PathTimes], KAP;
-read table kapxl; #table inkap IN "amplcsv"
+if shock in {"shock", "noshock"} then {
+  read table kapxl; #table inkap IN "amplcsv"
+};
 # to continue the previous loop
 #for {r in Regions, i in Sectors} let KAP[r, i, 0] := KAP[r, i, 36];
 #(datadir & "KAP.csv"): [Regions, Sectors, PathTimes], KAP;
@@ -50,7 +60,7 @@ update data;
 #  let KAP[r, i, PInf]
 #    := 1;
 #    := RAW_KAP_OUT[r, i] / sum{j in Sectors} RAW_KAP_OUT[r, j]
-#      + RAW_OUT_REG_SEC[r, i] / sum{j in Sectors} RAW_OUT_REG_SEC[r, j]
+#      + PROP_OUT_PER_SEC[r, i];
 #      + 50e-2
 #      ;
 #};
@@ -63,13 +73,25 @@ for {s in PathTimes}{
 #-----------------------------------------------------------------------------#
 # the shock
 #-----------------------------------------------------------------------------#
-  if s = 71 then {
-    let A['C'] := A['C'] * 080e-2;
-    let RAW_XPO_JOUT['GLD', 'C'] := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
-#    let RAW_MED_FLW['GLD', 'B', 'C'] := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
-    let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
-    let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
-    let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
+  if shock = "shock" then {
+    if s = PInf + 1 then {
+      let A['C'] := A['C'] * 080e-2;
+      let RAW_XPO_JOUT['GLD', 'C', s]
+        := RAW_XPO_JOUT['GLD', 'C', s] * 3 / 4; 
+      let RAW_MED_FLW['GLD', 'B', 'C', s]
+        := RAW_MED_FLW['GLD', 'B', 'C', s] * 090e-2;
+      let RAW_MED_FLW['GLD', 'C', 'C', s]
+        := RAW_MED_FLW['GLD', 'C', 'C', s] * 040e-2;
+      let RAW_MED_FLW['GLD', 'D', 'C', s]
+        := RAW_MED_FLW['GLD', 'D', 'C', s] * 15e-2;
+      let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
+    };
+  };
+#-----------RAS
+  if shock = "historic" then {
+      for {r in Regions, i in Sectors, j in Sectors} {
+      RAW_INV_FLW['GLD', i, j, s] = INV['GLD', i, j, s - 1];
+      RAW_MED_FLW['GLD', i, j, s] = MED['GLD', i, j, s - 1];
   };
 #-----------update kapital (CJ call this the simulation step)
   fix {r in Regions, j in Sectors} kap[r, j, LInf] := KAP[r, j, s];
@@ -83,21 +105,21 @@ for {s in PathTimes}{
   SHR_INV_CES['GLD', 'A', 'O'], DELTA['O'];
   display A_CON, A_INV, A_MED, A_VAL, A_LAB['GLD', 0],
   EPS_INV, EPS_MED, EPS_CON, EPS_OUT, EPS_LAB,
-  RHO_INV,  RHO_MED,  RHO_CON, RHO_OUT, RHO_LAB,
+  RHO_INV,  RHO_MED,  RHO_CON, RHO_OUT['A'], RHO_LAB,
   SCALE_CON, SCALE_INV, SCALE_MED, SCALE_OUT, SCALE_LAB,
   SCALE_CMED, SCALE_CINV;
 #-----------in this algorithm other variables automatically get warm start
 #  display E_out['GLD', 'O', LInf], con['GLD', 'O', LInf];
 #-----------set and solve the plan for start time s
   objective pres_disc_val;
-  let InstanceName := ("maiwar"
-    & card(Regions) & "x" & card(Sectors)
-    & "x" & card(LookForward) & "x");
-  #write ("b" & InstanceName);
-#-----------call the solver
+  let InstanceName := (outputdir & filename);
+  write ("b" & InstanceName);
   display s;
-  solve;
-  #solution (InstanceName & ".sol");
+  if toggle_sol = "previous"
+#-----------pull prior results into ampl:
+  then {solution (InstanceName & ".sol");}
+#-----------default: call the solver
+  else solve;
   display ctime(), _ampl_elapsed_time, _total_solve_time,
   _total_solve_system_time, _total_solve_user_time
   >> (InstanceName & "-results.txt");
@@ -110,8 +132,8 @@ for {s in PathTimes}{
 #-----------save actual path values of variables to parameter
     let CON[r, i, s] := con[r, i, LInf];
     let INV_SEC[r, i, s] := inv_sec[r, i, LInf];
-    let INV_SUM[r, i, s] := sum{j in Sectors} inv[r, i, j, LInf];
-    let MED_SUM[r, i, s] := sum{j in Sectors} med[r, i, j, LInf];
+    let INV_RSUM[r, i, s] := sum{j in Sectors} inv[r, i, j, LInf];
+    let MED_RSUM[r, i, s] := sum{j in Sectors} med[r, i, j, LInf];
     let LAB[r, i, s] := lab[r, i, LInf];
     let LAB_EXT[r, i, s] := lab_ext[r, i, LInf];
     let E_OUT[r, i, s] := E_out[r, i, LInf];
@@ -133,10 +155,17 @@ for {s in PathTimes}{
     let AGG_XPO[r, s] := sum{ii in Sectors} xpo[r, ii, LInf];
     let AGG_YMED_CSUM[r, s] :=
       sum{ii in Sectors}(sum{j in Sectors} ymed[r, ii, j, LInf]);
+    let PRC_DOM[i, s] := prc_dom[i, LInf];
+    for {j in Sectors, ii in Sectors}{
+    let JAC_ID[r, i, j, ii, s] := inv[r, i, j, LInf] * inv[r, ii, ii, LInf]
+          * SHR_INV_CES[r, i, ii] * SHR_INV_CES[r, ii, j] 
+        - inv[r, i, ii, LInf] * inv[r, ii, j, LInf]
+          * SHR_INV_CES[r, i, j] * SHR_INV_CES[r, ii, ii];
+    };
   };
 #    let TAIL_SHR_CON := (sum{r in Regions, i in Sectors} CON[r, i, s])
 #      / (sum{r in Regions, i in Sectors} E_OUT[r, i, s]);
-  #display E_OUT, CON, INV_SUM, MED_SUM, ADJ_COST_KAP, LAB, KAP;
+  #display E_OUT, CON, INV_RSUM, MED_RSUM, ADJ_COST_KAP, LAB, KAP;
   #display max {r in Regions, i in Sectors} DUAL_KAP[r, i, s];
   #display min {r in Regions, i in Sectors} DUAL_KAP[r, i, s];
   for {i in Sectors}{
@@ -144,8 +173,8 @@ for {s in PathTimes}{
     let MKT_CLR[i, s] := sum{rr in Regions}(
       DOM[rr, i, s] 
       - CON[rr, i, s]
-      - INV_SUM[rr, i, s] 
-      - MED_SUM[rr, i, s]
+      - INV_RSUM[rr, i, s] 
+      - MED_RSUM[rr, i, s]
       - ADJ_COST_KAP[rr, i, s]
       );
     let DUAL_MKT_CLR[i, s] := market_clearing[i, LInf];
@@ -166,11 +195,11 @@ for {s in PathTimes}{
 #-----------Euler integrand for CES production
     let EULER_INTEGRAND[r, i, s] := DUAL_KAP[r, i, s] * (1 - DELTA[i]) 
       + DUAL_MKT_CLR[i, s] * (
-        SHR_KAP_OUT_CES[r, i] * LAB_EXT[r, i, s] ** RHO_OUT
-          * KAP[r, i, s] ** (RHO_OUT - 1)
+        SHR_KAP_OUT_CES[r, i] * LAB_EXT[r, i, s] ** RHO_OUT[i]
+          * KAP[r, i, s] ** (RHO_OUT[i] - 1)
         * SCALE_OUT * A[i] * SHR_DOM[r, i, s]
           * (DOM[r, i, s] / (A[i] * SHR_DOM[r, i, s]))
-            ** (1 - RHO_OUT / SCALE_OUT)
+            ** (1 - RHO_OUT[i] / SCALE_OUT)
         - PHI_ADJ[i] * (2 * GROWTH_KAP[r, i, s] + GROWTH_KAP[r, i, s] ** 2)
       );
     if s > PInf then 
@@ -180,16 +209,17 @@ for {s in PathTimes}{
 
    write table res;
    write table aggres;
+   write table prcres;
 #  write table kp;
   display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
     min{r in Regions, i in Sectors} E_OUT[r, i, s],
     max{r in Regions, i in Sectors} E_OUT[r, i, s],
     min{r in Regions, i in Sectors} CON[r, i, s],
     max{r in Regions, i in Sectors} CON[r, i, s],
-    min{r in Regions, i in Sectors} INV_SUM[r, i, s],
-    max{r in Regions, i in Sectors} INV_SUM[r, i, s],
-    min{r in Regions, i in Sectors} MED_SUM[r, i, s],
-    max{r in Regions, i in Sectors} MED_SUM[r, i, s],
+    min{r in Regions, i in Sectors} INV_RSUM[r, i, s],
+    max{r in Regions, i in Sectors} INV_RSUM[r, i, s],
+    min{r in Regions, i in Sectors} MED_RSUM[r, i, s],
+    max{r in Regions, i in Sectors} MED_RSUM[r, i, s],
     max{r in Regions, i in Sectors} ADJ_COST_KAP[r, i, s],
     max{i in Sectors} abs(MKT_CLR[i, s]),
     min{i in Sectors} DUAL_MKT_CLR[i, s],
@@ -214,6 +244,3 @@ for {s in PathTimes}{
 #  if s > PInf then display EULER_RATIO[r, i, s] - EULER_RATIO[r, i, s - 1];
 #  };
 };
-
-
-#display KAP;

@@ -222,7 +222,7 @@ outtocsv("SHR_MED_ROW", prepsubframe(rowshr, sectorcodes, sectorcodes));
 outtocsv("SHR_MED_COL", prepsubframe(colshr, sectorcodes, sectorcodes));
 
 
-# RAW_OUT_REG_SEC output per region and division
-outtocsv("RAW_OUT_REG_SEC", prepsubframe(tbloutperdiv, sectorcodes, region)); 
+# RAW_REG_OUT: output per region and division
+outtocsv("RAW_REG_OUT", prepsubframe(tbloutperdiv, sectorcodes, refreg)); 
 
 println("done saving to julia/output/*.csv")
