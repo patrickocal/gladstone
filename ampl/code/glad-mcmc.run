@@ -76,19 +76,23 @@ for {s in PathTimes}{
   if shock = "shock" then {
     if s = PInf + 1 then {
       let A['C'] := A['C'] * 080e-2;
-      let RAW_XPO_JOUT['GLD', 'C']
-        := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
-      let RAW_MED_FLW['GLD', 'B', 'C']
-        := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
-      let RAW_MED_FLW['GLD', 'C', 'C']
-        := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
-      let RAW_MED_FLW['GLD', 'D', 'C']
-        := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
+      let RAW_XPO_JOUT['GLD', 'C', s]
+        := RAW_XPO_JOUT['GLD', 'C', s] * 3 / 4; 
+      let RAW_MED_FLW['GLD', 'B', 'C', s]
+        := RAW_MED_FLW['GLD', 'B', 'C', s] * 090e-2;
+      let RAW_MED_FLW['GLD', 'C', 'C', s]
+        := RAW_MED_FLW['GLD', 'C', 'C', s] * 040e-2;
+      let RAW_MED_FLW['GLD', 'D', 'C', s]
+        := RAW_MED_FLW['GLD', 'D', 'C', s] * 15e-2;
       let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
     };
   };
 #-----------RAS
-# see glad-mcmc.run
+  if shock = "historic" then {
+      for {r in Regions, i in Sectors, j in Sectors} {
+      RAW_INV_FLW['GLD', i, j, s] = INV['GLD', i, j, s - 1];
+      RAW_MED_FLW['GLD', i, j, s] = MED['GLD', i, j, s - 1];
+  };
 #-----------update kapital (CJ call this the simulation step)
   fix {r in Regions, j in Sectors} kap[r, j, LInf] := KAP[r, j, s];
   let ALPHA := ALPHA_0 ** s;
