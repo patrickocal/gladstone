@@ -393,7 +393,7 @@ end;
 labpersec = makebasiclq(labpersecraw)[1];
 # save regional labour to julia output folder as csv in ampl-ready form
 CSV.write(outputdir * "labsecreg.csv", labpersec[1:numdiv, [1, 3, 4]]);
-labpersec = makebasiclq(outpersecraw)[1];
+outrowpersec = makebasiclq(outpersecraw)[1];
 (outpersec, outgrowth) = makebasiclq(outpersecraw);
 # more regional data
 (source == "remplan"
@@ -452,14 +452,14 @@ for i in range(1, 6)
   push!(outpersec, [austable8[numdiv + i, 1] p[i, 1] p[i, 2]])
 end;
 labperdiv = labpersec;
-labpersec = labpersec[:, Not("ANZdiv")];
+outrowpersec = outrowpersec[:, Not("ANZdiv")];
 for i in range(1, 7)
-  push!(labpersec, ["`Q"*string(i) q[i, 1] q[i, 2]])
+  push!(outrowpersec, ["`Q"*string(i) q[i, 1] q[i, 2]])
 end;
 # 
 println("")
-println(sum(labpersec[:, 2]) - sum(outpersec[:, 2]));
-println(sum(labpersec[:, 3]) - sum(outpersec[:, 3]));
+println(sum(outrowpersec[:, 2]) - sum(outpersec[:, 2]));
+println(sum(outrowpersec[:, 3]) - sum(outpersec[:, 3]));
 
 #==============================================================================
 RAS
@@ -470,7 +470,7 @@ Acol = columnindex(austable8rr, "A");
 numcol = size(austable8rr, 2) - 2; 
 newrowtot = austable8rr[end, Between("A", "Q7")];
 newcoltot = austable8rr[1:numrow, end];
-newrowtot = labpersec[1:numcol, 2];
+newrowtot = outrowpersec[1:numcol, 2];
 newcoltot = outpersec[1:numrow, 2];
 
 # with current data, we need to RAS 5 first, so imports are excluded from flows

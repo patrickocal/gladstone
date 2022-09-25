@@ -84,20 +84,11 @@ param VSup 'supremum of interval for basic variables' default 1e+6;
 param OInf 'infimum of interval for observed/actual values' default 1e-7;
 param OSup 'supremum of interval for observed/actual values' default 1e+7;
 param LabSup 'supremum of interval for labour values' default VSup;
-param EXP_LAB_EXT 'Exponent of lab_ext_sec'
-  {Regions, Sectors, LookForward} default 200e-2;
-param NAIRE 'Non-accelerating rate of employment'
-  {Regions, Sectors, LookForward} default 100e-2;
 #-----------productivity and relative importance of labour in utility
 param A 'productivity trend'
-  {i in Sectors}
-  default 1; #(1 - (1 - DELTA[i]) * BETA) / (SHR_KAP_OUT_CES[r, i] * BETA) >= 0;
+  {Sectors} default 1;
 param A_LAB 'importance of disutility of labour (weight in utility function)' 
-  {Regions, LookForwardClosure}
-    default -1;
-param A_LAB_EXT 'disutility weight for labourforce deviations in utility'
-  default -1;
-  #(1 - SHR_KAP_OUT_CES[r, i]) * A[i] * (A[i] - DELTA[i]) ** (-1 / GAMMA[r]) >= 0;
+  {Regions, LookForwardClosure} default -1;
 param A_CON 'importance of consumption in utility'
   default 1;
 param A_VAL 'Calibration factor for terminal value function'
@@ -185,18 +176,16 @@ param INV 'observed investment flows'
 param INV_SEC 'observed investment in a sector (column CES sum)'
   {Regions, Sectors, PathTimes}
   default 1e+0; # in (OInf, OSup);
-param INV_RSUM 'observed row sum of investment'
+param INV_CSUM 'observed row sum of investment'
   {Regions, Sectors, PathTimes}
   default 1e+0; # in (OInf, OSup); 
 param MED 'observed intermediate flows'
   {Regions, Sectors, Sectors, PathTimes}
   default 1;
-param MED_RSUM 'observed rowsum of intermediate flows'
+param MED_CSUM 'observed rowsum of intermediate flows'
   {Regions, Sectors, PathTimes}
   default 1e+0; # in (OInf, OSup); 
 param LAB 'observed labour' {Regions, Sectors, PathTimes}
-  default 1e+0; # in (OInf, OSup);
-param LAB_EXT 'observed laborforce participation' {Regions, Sectors, PathTimes}
   default 1e+0; # in (OInf, OSup);
 param E_OUT 'observed Exp. output' {Regions, Sectors, PathTimes}
   default 1e+0; # in (OInf, OSup); 
@@ -290,6 +279,9 @@ param SQDIFF_PROP_OUT 'squared difference of propnl output: expected - raw'
 param SUM_SQDIFF_PROP_OUT 'squared difference in propnl output: expected - raw'
   {r in Regions, s in PathTimes}
   = sum{i in Sectors} SQDIFF_PROP_OUT[r, i, s];
+param MAX_DIFF_PROP_OUT 'squared difference in propnl output: expected - raw'
+  {r in Regions, s in PathTimes}
+  = max{i in Sectors} abs(DIFF_PROP_OUT[r, i, s]);
 #==============================================================================
 # Computed parameters
 #==============================================================================
@@ -461,9 +453,6 @@ labour split into time spent working and laborforce both normalised
 var lab 'labour hours' {Regions, Sectors, LookForward}
   in [VInf, LabSup] default 33e-2;
 #-----------to do: add occupations as a set in the following
-var lab_ext 'active laborforce but can also be interpreted as effort'
-  {r in Regions, i in Sectors, t in LookForward}
-  in [0, 100e-2] default NAIRE[r, i, t];
 /*-----------------------------------------------------------------------------
 kapital, the dynamic variable, is defined on LookForwardClosure
 -----------------------------------------------------------------------------*/
@@ -613,10 +602,6 @@ var lab_sec_caveF 'Frisch labour aggregate (across sectors) concave level sets'
   {r in Regions, t in LookForward}
   = (sum{j in Sectors} SHR_LAB_CES[r, j] * lab[r, j , t] ** RHO_LAB)
     ** (RHO_LAB_HAT * SCALE_LAB);
-var lab_ext_sec 'labourforce aggregator'
-  {r in Regions, t in LookForward}
-  = sum{j in Sectors}
-    (NAIRE[r, j, t] - lab_ext[r, j, t]) ** EXP_LAB_EXT[r, j, t];
 #-----------variety of adjustment cost functions 
 var adj_cost_kap_Q 'quadratic adjustment costs for kapital'
   {r in Regions, i in Sectors, t in LookForward}
@@ -640,11 +625,11 @@ var E_out_CES 'Constant Elasticity of Substitution output transformation'
   {r in Regions, i in Sectors, t in LookForward}
   = E_shk[r, i, t] * A[i] * (
     SHR_KAP_OUT_CES[r, i]
-      * (kap[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT[i]
+      * (kap[r, i, t]) ** RHO_OUT[i]
     + SHR_LAB_OUT_CES[r, i]
       * (lab[r, i, t] ) ** RHO_OUT[i] 
     + SHR_MED_OUT_CES[r, i]
-      * (med_sec_CES[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT[i]
+      * (med_sec_CES[r, i, t]) ** RHO_OUT[i]
     + 1
       * (33e-2 * ALPHA * ALPHA_0 ** t) ** RHO_OUT[i]
     ) ** (RHO_OUT_HAT[i] * SCALE_OUT);
@@ -652,11 +637,11 @@ var E_cout_CES 'Constant Elasticity of Substitution output transformation'
   {r in Regions, i in Sectors, t in LookForward}
   = E_shk[r, i, t] * A[i] * (
     SHR_KAP_OUT_CES[r, i]
-      * (kap[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT[i]
+      * kap[r, i, t] ** RHO_OUT[i]
     + SHR_LAB_OUT_CES[r, i]
-      * (lab[r, i, t] ) ** RHO_OUT[i] 
+      * lab[r, i, t] ** RHO_OUT[i] 
     + SHR_MED_OUT_CES[r, i]
-      * (cmed_sec_CES[r, i, t] * lab_ext[r, i, t]) ** RHO_OUT[i]
+      * cmed_sec_CES[r, i, t] ** RHO_OUT[i]
     + SHR_EFF_OUT
       * (33e-2 * ALPHA * ALPHA_0 ** t) ** RHO_OUT[i]
     ) ** (RHO_OUT_HAT[i] * SCALE_OUT);
@@ -704,7 +689,6 @@ var utility_CES_caveF 'Const. Elast. Subst. and conc. Frisch instant. utility'
   = sum{r in Regions}
       REG_WGHT[r] * (
         A_CON * con_sec_CES[r, t]
-        + A_LAB_EXT * lab_ext_sec[r, t]
         + A_LAB[r, t] * lab_sec_caveF[r, t]
       );
 var utility_CD_caveF 'Cobb-Douglas and concave Frisch inst. utility'
@@ -712,7 +696,6 @@ var utility_CD_caveF 'Cobb-Douglas and concave Frisch inst. utility'
   = sum{r in Regions}
       REG_WGHT[r] * (
         A_CON * con_sec_CD[r, t]
-        + A_LAB_EXT * lab_ext_sec[r, t]
         + A_LAB[r, t] * lab_sec_caveF[r, t]
       );
 var cutility_CD_caveF 'Cobb-Douglas-Leontief and concave Frisch inst. utility'
@@ -720,7 +703,6 @@ var cutility_CD_caveF 'Cobb-Douglas-Leontief and concave Frisch inst. utility'
   = sum{r in Regions}
       REG_WGHT[r] * (
         A_CON * ccon_sec_CD[r, t]
-      #  + A_LAB_EXT * lab_ext_sec[r, t]
         + A_LAB[r, t] * lab_sec_caveF[r, t]
       );
 #-----------variety of tail or terminal value functions
@@ -782,7 +764,6 @@ var tail_val_CESutl_caveF_CESout
       + SHR_LAB_OUT_CES[r, i] * (1 * ALPHA * ALPHA_0 ** (LSup + LInf)) ** RHO_OUT[i]
     ) ** (RHO_OUT_HAT[i] * SCALE_OUT)) ** RHO_CON
   ) ** (RHO_CON_HAT * SCALE_CON) 
-    + A_LAB_EXT * 0
     + A_LAB[r, LSup + LInf] * (
       sum{i in Sectors} SHR_LAB_CES[r, i] * 33e-2 ** RHO_LAB
       ) ** (RHO_LAB_HAT * SCALE_LAB)
@@ -798,7 +779,6 @@ var tail_val_CDutl_caveF_CESout
     ) ** (RHO_OUT_HAT[i] * SCALE_OUT)
     ) ** (SHR_CON[r, i] * SCALE_CON)
     )
-    + A_LAB_EXT * 0
     + A_LAB[r, LSup + LInf] * (
       sum{i in Sectors} SHR_LAB_CES[r, i] * 33e-2 ** RHO_LAB
       ) ** (RHO_LAB_HAT * SCALE_LAB)
@@ -1025,11 +1005,11 @@ for {i in Sectors}{
   let EPS_OUT[i] := 0800e-3;
 };
 let EPS_OUT['C'] := 700e-3;
-let A_CON := 00100e-2; #increase this to increase labour and consumption
+let EPS_OUT['E'] := 700e-3;
+let A_CON := 00200e-2; #increase this to increase labour and consumption
 let A_INV := 0090e-2;
 let A_MED := 0010e-2;
 let A_VAL := 0001e-2;
-let A_LAB_EXT := -0545e-2;
 #let A_CMED := 1;
 let TAIL_SHR_CON := 045e-2;
 
@@ -1047,7 +1027,6 @@ let SCALE_CMED := 990e-3;
 let SCALE_CINV := 990e-3;
 for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
 #  fix lab[r, j, t] := 33e-2;
-  fix lab_ext[r, j, t] := 100e-2;
   if SHR_INV_CES[r, i, j] < 1e-12 then
     fix dinv[r, i, j, t] := 0;
   if SHR_MED_CES[r, i, j] < 1e-12 then
@@ -1063,7 +1042,7 @@ for {i in Sectors}{
     + (SHR_MED_ROW['GLD', i, i]
       / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT[i]) / RHO_OUT[i])
       * SCALE_OUT ** (1 / RHO_OUT[i])
-    + 8 * RAW_REG_OUT['GLD', i]
+    + 10 * RAW_REG_OUT['GLD', i]
       / sum{j in Sectors} RAW_REG_OUT['GLD', j];
   let EPS_JOUT['GLD', i] := 10e-2;
   for {j in Sectors}{
@@ -1071,7 +1050,7 @@ for {i in Sectors}{
   };
 };
 #let A['C'] := 110e-2 * A['C'];
-#let A['M'] := 130e-2;
+#let A['M'] := 130e-2 * A'M'];
 #let A['D'] := 070e-2 * A['D'];
 #let A['L'] := 070e-2 * A['L'];
 #let A['K'] := 070e-2 * A['K'];
@@ -1111,9 +1090,7 @@ param nwshr2 'Alternative share parameter for square parameters'
 Solving the model
 =============================================================================*/
 param InstanceName symbolic;
-option solver knitro;
-#option solver ipopt;
-option show_stats 1;
+param solvername symbolic default "knitro";
 # declare some parameters for directories and files
 param experiment symbolic;
 param shock symbolic;

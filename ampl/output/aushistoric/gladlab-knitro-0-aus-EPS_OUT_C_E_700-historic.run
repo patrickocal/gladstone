@@ -6,6 +6,12 @@ let PSup := 70;
 #=============================================================================#
 # are we solving or pulling in prior results? Comment out if solving:
 let toggle_sol := "previous";
+# which solver are we using? Comment out to use the default: knitro.
+#let solvername := "conopt";
+if solvername = "conopt" then option solver conopt;
+if solvername = "knitro" then option solver knitro;
+option solver ;
+option show_stats 1;
 #=============================================================================#
 # setup for output of results
 #=============================================================================#
@@ -13,8 +19,8 @@ let outputdir := "ampl/output/";
 #option solver conopt;
 let shock := "historic";
 let reg := "aus";
-let filename := ("glad-mcmc-"
-                 & PInf & "-" & reg & "-EPS_CAL-" & shock);
+let filename := ("gladlab-" & solvername & "-"
+                 & PInf & "-" & reg & "-EPS_OUT_C_E_700-" & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
 # declare output tables
@@ -70,36 +76,31 @@ display KAP;
 #=============================================================================#
 for {s in PathTimes}{
   display s, ctime();
-#-----------------------------------------------------------------------------#
-# the shock
-#-----------------------------------------------------------------------------#
+  #---------------------------------------------------------------------------#
+  # the shock
+  #---------------------------------------------------------------------------#
   if shock = "shock" then {
     if s = PInf + 1 then {
       let A['C'] := A['C'] * 080e-2;
-      let RAW_XPO_JOUT['GLD', 'C', s]
-        := RAW_XPO_JOUT['GLD', 'C', s] * 3 / 4; 
-      let RAW_MED_FLW['GLD', 'B', 'C', s]
-        := RAW_MED_FLW['GLD', 'B', 'C', s] * 090e-2;
-      let RAW_MED_FLW['GLD', 'C', 'C', s]
-        := RAW_MED_FLW['GLD', 'C', 'C', s] * 040e-2;
-      let RAW_MED_FLW['GLD', 'D', 'C', s]
-        := RAW_MED_FLW['GLD', 'D', 'C', s] * 15e-2;
+      let RAW_XPO_JOUT['GLD', 'C']
+        := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
+      let RAW_MED_FLW['GLD', 'B', 'C']
+        := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
+      let RAW_MED_FLW['GLD', 'C', 'C']
+        := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
+      let RAW_MED_FLW['GLD', 'D', 'C']
+        := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
       let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
     };
   };
-#-----------RAS
-  if shock = "historic" then {
-      for {r in Regions, i in Sectors, j in Sectors} {
-      RAW_INV_FLW['GLD', i, j, s] = INV['GLD', i, j, s - 1];
-      RAW_MED_FLW['GLD', i, j, s] = MED['GLD', i, j, s - 1];
-  };
-#-----------update kapital (CJ call this the simulation step)
+  #-----------RAS
+  # see glad-mcmc.run
+  #-----------update kapital (CJ call this the simulation step)
   fix {r in Regions, j in Sectors} kap[r, j, LInf] := KAP[r, j, s];
   let ALPHA := ALPHA_0 ** s;
   
-#-----------display some parameter values:
-  display PHI_ADJ['A'], A_LAB_EXT,
-  NAIRE['GLD', 'O', 0], EXP_LAB_EXT['GLD', 'A', 0],
+  #-----------display some parameter values:
+  display PHI_ADJ['A'],
   LabSup, LSup, ALPHA_0, ALPHA, BETA, A['O'],
   SHR_CON['GLD', 'O'], SHR_LAB['GLD', 'O'],
   SHR_INV_CES['GLD', 'A', 'O'], DELTA['O'];
@@ -108,34 +109,37 @@ for {s in PathTimes}{
   RHO_INV,  RHO_MED,  RHO_CON, RHO_OUT['A'], RHO_LAB,
   SCALE_CON, SCALE_INV, SCALE_MED, SCALE_OUT, SCALE_LAB,
   SCALE_CMED, SCALE_CINV;
-#-----------in this algorithm other variables automatically get warm start
-#  display E_out['GLD', 'O', LInf], con['GLD', 'O', LInf];
-#-----------set and solve the plan for start time s
+  #-----------in this algorithm other variables automatically get warm start
+  #  display E_out['GLD', 'O', LInf], con['GLD', 'O', LInf];
+  #-----------set and solve the plan for start time s
   objective pres_disc_val;
   let InstanceName := (outputdir & filename);
-  write ("b" & InstanceName);
   display s;
-  if toggle_sol = "previous"
-#-----------pull prior results into ampl:
-  then {solution (InstanceName & ".sol");}
-#-----------default: call the solver
-  else solve;
-  display ctime(), _ampl_elapsed_time, _total_solve_time,
-  _total_solve_system_time, _total_solve_user_time
-  >> (InstanceName & "-results.txt");
-#-----------display step values
+  #-----------default: call the solver
+  if toggle_sol = "solve" then {
+    #-------write out an nl file this means that a sol file is also generated
+    write ("b" & InstanceName);
+    #-------actually solve
+    solve;
+    #-------store solve times to ..results.txt
+    display s, ctime(), _ampl_elapsed_time, _total_solve_time,
+      _total_solve_system_time, _total_solve_user_time
+      >> (InstanceName & "-results.txt");
+  };
+  #-----------alternatively, pull prior results into ampl:
+  if toggle_sol = "previous" then solution (InstanceName & ".sol");
+  #-----------display step values
   display E_out["GLD", "O", LInf], con["GLD", "O", LInf],
   inv_sec["GLD", "O", LInf], kap["GLD", "O", LInf],
   lab["GLD", "O", LInf], kap_transition["GLD", "O", LInf],
   market_clearing["O", LInf];
   for {r in Regions, i in Sectors}{
-#-----------save actual path values of variables to parameter
+  #-----------save actual path values of variables to parameter
     let CON[r, i, s] := con[r, i, LInf];
     let INV_SEC[r, i, s] := inv_sec[r, i, LInf];
     let INV_RSUM[r, i, s] := sum{j in Sectors} inv[r, i, j, LInf];
     let MED_RSUM[r, i, s] := sum{j in Sectors} med[r, i, j, LInf];
     let LAB[r, i, s] := lab[r, i, LInf];
-    let LAB_EXT[r, i, s] := lab_ext[r, i, LInf];
     let E_OUT[r, i, s] := E_out[r, i, LInf];
     let DOM[r, i, s] := dom[r, i, LInf];
     let SHR_DOM[r, i, s] := shr_dom[r, i, LInf];
@@ -163,13 +167,13 @@ for {s in PathTimes}{
           * SHR_INV_CES[r, i, j] * SHR_INV_CES[r, ii, ii];
     };
   };
-#    let TAIL_SHR_CON := (sum{r in Regions, i in Sectors} CON[r, i, s])
-#      / (sum{r in Regions, i in Sectors} E_OUT[r, i, s]);
+  #    let TAIL_SHR_CON := (sum{r in Regions, i in Sectors} CON[r, i, s])
+  #      / (sum{r in Regions, i in Sectors} E_OUT[r, i, s]);
   #display E_OUT, CON, INV_RSUM, MED_RSUM, ADJ_COST_KAP, LAB, KAP;
   #display max {r in Regions, i in Sectors} DUAL_KAP[r, i, s];
   #display min {r in Regions, i in Sectors} DUAL_KAP[r, i, s];
   for {i in Sectors}{
-#-----------save actual path values of market clearing to parameter
+  #-----------save actual path values of market clearing to parameter
     let MKT_CLR[i, s] := sum{rr in Regions}(
       DOM[rr, i, s] 
       - CON[rr, i, s]
@@ -179,38 +183,36 @@ for {s in PathTimes}{
       );
     let DUAL_MKT_CLR[i, s] := market_clearing[i, LInf];
   };
-#-----------growth rate of capital as a parameter
+  #-----------growth rate of capital as a parameter
   for {r in Regions, i in Sectors}{
     let GROWTH_KAP[r, i, s] := (KAP[r, i, s + 1] - KAP[r, i, s]) / KAP[r, i, s];
     if s > PInf then 
     let GROWTH_OUT[r, i, s] :=
       (E_OUT[r, i, s] - E_OUT[r, i, s - 1]) / E_OUT[r, i, s - 1];
    
-#-----------Euler integrand for Cobb--Douglas production
+  #-----------Euler integrand for Cobb--Douglas production
     #let EULER_INTEGRAND[r, i, s] :=  DUAL_KAP[r, i, s] * (1 - DELTA[i]) 
     #  + DUAL_MKT_CLR[i, s] * (
     #    SHR_KAP_OUT[i] * (KAP[r, i, s] / LAB[r, i, s]) ** (SHR_KAP_OUT[i] - 1)
     #    - PHI_ADJ[i] * (2 * GROWTH_KAP[r, i, s] + GROWTH_KAP[r, i, s] ** 2)
     #  );
-#-----------Euler integrand for CES production
+  #-----------Euler integrand for CES production
     let EULER_INTEGRAND[r, i, s] := DUAL_KAP[r, i, s] * (1 - DELTA[i]) 
       + DUAL_MKT_CLR[i, s] * (
-        SHR_KAP_OUT_CES[r, i] * LAB_EXT[r, i, s] ** RHO_OUT[i]
-          * KAP[r, i, s] ** (RHO_OUT[i] - 1)
-        * SCALE_OUT * A[i] * SHR_DOM[r, i, s]
-          * (DOM[r, i, s] / (A[i] * SHR_DOM[r, i, s]))
-            ** (1 - RHO_OUT[i] / SCALE_OUT)
+        SHR_KAP_OUT_CES[r, i] * KAP[r, i, s] ** (RHO_OUT[i] - 1)
+          * SCALE_OUT * A[i] * SHR_DOM[r, i, s]
+            * (DOM[r, i, s] / (A[i] * SHR_DOM[r, i, s]))
+              ** (1 - RHO_OUT[i] / SCALE_OUT)
         - PHI_ADJ[i] * (2 * GROWTH_KAP[r, i, s] + GROWTH_KAP[r, i, s] ** 2)
       );
     if s > PInf then 
     let EULER_RATIO[r, i, s] 
         := BETA * EULER_INTEGRAND[r, i, s] / DUAL_KAP[r, i, s - 1];
   };
-
-   write table res;
-   write table aggres;
-   write table prcres;
-#  write table kp;
+  write table res;
+  write table aggres;
+  write table prcres;
+  #write table kp;
   display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
     min{r in Regions, i in Sectors} E_OUT[r, i, s],
     max{r in Regions, i in Sectors} E_OUT[r, i, s],
@@ -226,8 +228,6 @@ for {s in PathTimes}{
     max{i in Sectors} DUAL_MKT_CLR[i, s],
     min{r in Regions, i in Sectors} LAB[r, i, s],
     max{r in Regions, i in Sectors} LAB[r, i, s],
-    min{r in Regions, i in Sectors} LAB_EXT[r, i, s],
-    max{r in Regions, i in Sectors} LAB_EXT[r, i, s],
     min{r in Regions, i in Sectors} KAP[r, i, s + 1],
     max{r in Regions, i in Sectors} KAP[r, i, s + 1],
     min{r in Regions, i in Sectors} GROWTH_KAP[r, i, s],
@@ -239,10 +239,8 @@ for {s in PathTimes}{
     (sum{r in Regions, i in Sectors} con[r, i, LInf])
       / (sum{r in Regions, i in Sectors} E_out[r, i, LInf]),
     KAP['GLD', 'O', s] / E_OUT['GLD', 'O', s],
-    max{r in Regions, i in Sectors, j in Sectors, ii in Sectors}
-      abs(JAC_ID[r, i, j, ii, s]),
     s, _ampl_elapsed_time, _total_solve_time, ctime();
-#  for {r in Regions, i in Sectors}{
-#  if s > PInf then display EULER_RATIO[r, i, s] - EULER_RATIO[r, i, s - 1];
-#  };
+  # for {r in Regions, i in Sectors}{
+  # if s > PInf then display EULER_RATIO[r, i, s] - EULER_RATIO[r, i, s - 1];
+  # };
 };

@@ -112,60 +112,60 @@ param A_MED 'Calibration factor for intermediate bundle'
 #-----------set the seed for the random number generator for weights
 option randseed 12345;
 param RAW_CON_FLW "raw consumption flows: table8Q1"
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_INV_FLW "raw investment flows: tablekapflw"
-  {Regions, Sectors, Sectors, PathTimes} 
+  {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
 param REG_LAB  "raw number of workers in region"
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 #param REF_LAB  "raw number of workers in reference region(s)"
 #  {RefRegions, Sectors}
 #  default Uniform(UInf, USup) >= 0;
 param RAW_MED_FLW "raw intermediate flows: table8"
-  {Regions, Sectors, Sectors, PathTimes} 
+  {Regions, Sectors, Sectors} 
   default Uniform(UInf, USup) >= 0;
 #-----------raw shares of the three components of output
 param RAW_KAP_OUT 'raw capital primary input flows: table8P2'
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_LAB_OUT 'raw compensation of employees primary input flows: table8P1'
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_MED_OUT 'raw total intermediate input flows: table8T1'
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 #-----------raw Armington data
 param RAW_DOM_CCON 'raw domestic flows to consumption: table5Q1'
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_YPO_CCON 'raw import flows to consumption: table(8-5)'
-  {Regions, Sectors, PathTimes}
+  {r in Regions, i in Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_DOM_CINV 'raw domestic flows to investment: kapflows per table5'
-  {Regions, Sectors, Sectors, PathTimes}
+  {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_YPO_CINV 'raw import flows to investment: kapflows per tablediff'
-  {Regions, Sectors, Sectors, PathTimes}
+  {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_DOM_CMED 'raw domestic flows to intermediates: table5'
-  {Regions, Sectors, Sectors, PathTimes}
+  {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_YPO_CMED 'raw import flows to intermediates: table(8-5)'
-  {Regions, Sectors, Sectors, PathTimes}
+  {r in Regions, i in Sectors, j in Sectors}
   default Uniform(UInf, USup) >= 0;
 param RAW_XPO_JOUT 'raw export data: table8Q7'
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) * 10e-2;
 param RAW_DOM_JOUT 'raw total domestic uses: table8T6-Q7'
-  {Regions, Sectors, PathTimes}
+  {Regions, Sectors}
   default Uniform(UInf, USup) * 90e-2;
 param SHR_MED_ROW 'intermediate flows as a share of total demand (quasi-raw)'
-  {Regions, Sectors, Sectors, PathTimes}
+  {Regions, Sectors, Sectors}
   default 100e-2;
 param SHR_MED_COL 'intermediate flows as a share of total cost (quasi-raw)'
-  {Regions, Sectors, Sectors, PathTimes}
+  {Regions, Sectors, Sectors}
   default 100e-2;
 #-----------output per sector
 param RAW_REG_OUT 'raw output per region and sector'
@@ -315,89 +315,85 @@ param  REG_WGHT 'regional (population) weights' {r in Regions}
 #-----------For default values, we draw from the uniform distribution.
 #-----------input shares for output
 param SHR_LAB_OUT 'share of labour in output'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = RAW_LAB_OUT[r, i, s]
-    / (RAW_KAP_OUT[r, i, s] + RAW_LAB_OUT[r, i, s] + RAW_MED_OUT[r, i, s]); 
+  {r in Regions, i in Sectors}
+  = RAW_LAB_OUT[r, i] / (RAW_KAP_OUT[r, i] + RAW_LAB_OUT[r, i] + RAW_MED_OUT[r, i]); 
 param SHR_KAP_OUT 'importance of capital in production'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = RAW_KAP_OUT[r, i, s]
-    / (RAW_KAP_OUT[r, i, s] + RAW_LAB_OUT[r, i, s] + RAW_MED_OUT[r, i, s]);
+  {r in Regions, i in Sectors}
+  = RAW_KAP_OUT[r, i] / (RAW_KAP_OUT[r, i] + RAW_LAB_OUT[r, i] + RAW_MED_OUT[r, i]);
 param SHR_KAPLAB_OUT 'combined importance of kapital and labour in output'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = SHR_KAP_OUT[r, i, s] + SHR_LAB_OUT[r, i, s];
+  {r in Regions, i in Sectors}
+  = SHR_KAP_OUT[r, i] + SHR_LAB_OUT[r, i];
 param SHR_MED_OUT 'share of intermediates in output'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = 1 - SHR_KAPLAB_OUT[r, i, s];
+  {r in Regions, i in Sectors}
+  = 1 - SHR_KAPLAB_OUT[r, i];
 #-----------output component shares for CES functions
 param SHR_KAP_OUT_CES 'importance of kapital in production'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = SHR_KAP_OUT[r, i, s] ** (1 / EPS_OUT[i]);
+  {r in Regions, i in Sectors}
+  = SHR_KAP_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_LAB_OUT_CES 'importance of labour in production'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = SHR_LAB_OUT[r, i, s] ** (1 / EPS_OUT[i]);
+  {r in Regions, i in Sectors}
+  = SHR_LAB_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_KAPLAB_OUT_CES 'combined importance of kapital and labour in prodn'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = SHR_KAPLAB_OUT[r, i, s] ** (1 / EPS_OUT[i]);
+  {r in Regions, i in Sectors}
+  = SHR_KAPLAB_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_MED_OUT_CES 'importance of intermediates in production'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = SHR_MED_OUT[r, i, s] ** (1 / EPS_OUT[i]);
+  {r in Regions, i in Sectors}
+  = SHR_MED_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_EFF_OUT 'share of efficiency component in output'
   default 1;
 #-----------consumption
 param CON_FLW_SUM
-  {r in Regions, s in PathTimes}
-  = sum{i in Sectors} RAW_CON_FLW[r, i, s];
+  {r in Regions}
+  = sum{i in Sectors} RAW_CON_FLW[r, i];
 param SHR_CON 'consumption weights for each good in utility (for Cobb-Doug)'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = (RAW_CON_FLW[r, i, s] / CON_FLW_SUM[r, s]);
+  {r in Regions, i in Sectors} = (RAW_CON_FLW[r, i] / CON_FLW_SUM[r]);
+  #{r in Regions, i in Sectors} = RAW_CON_FLW[r, i];
 param SHR_CON_CES 'CES consumption weights for each good in utility'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = (RAW_CON_FLW[r, i, s] / CON_FLW_SUM[r, s]) ** (1 / EPS_CON);
+  {r in Regions, i in Sectors}
+  = (RAW_CON_FLW[r, i] / CON_FLW_SUM[r]) ** (1 / EPS_CON);
 #-----------labour
-param LAB_FLW_SUM {r in Regions, s in PathTimes}
-  = sum{i in Sectors} REG_LAB[r, i, s];
+param LAB_FLW_SUM {r in Regions}
+  = sum{i in Sectors} REG_LAB[r, i];
 param SHR_LAB 'labour weights for each sector in utility'
-  {r in Regions, j in Sectors, s in PathTimes}
-  = REG_LAB[r, j, s] / LAB_FLW_SUM[r, s];
+  {r in Regions, j in Sectors}
+  = REG_LAB[r, j] / LAB_FLW_SUM[r];
   #{r in Regions, j in Sectors} = REG_LAB[r, j];
 #-----------inputs of sector i into j's investment).
-param INV_FLW_RSUM {r in Regions, j in Sectors, s in PathTimes} 
-  = sum{i in Sectors} RAW_INV_FLW[r, i, j, s];
+param INV_FLW_RSUM {r in Regions, j in Sectors} 
+  = sum{i in Sectors} RAW_INV_FLW[r, i, j];
 param SHR_INV_CES "sectoral share of i in j's CES investment aggregator"
-  {r in Regions, i in Sectors, j in Sectors, s in PathTimes}
-    = (RAW_INV_FLW[r, i, j, s] / INV_FLW_RSUM[r, j, s]) ** (1 / EPS_INV);
+  {r in Regions, i in Sectors, j in Sectors}
+    = (RAW_INV_FLW[r, i, j] / INV_FLW_RSUM[r, j]) ** (1 / EPS_INV);
     #= RAW_INV_FLW[r, i, j] ** (1 / EPS_INV);
 #-----------inputs of sector i into j's intermediate bundle).
-param MED_FLW_RSUM {r in Regions, j in Sectors, s in PathTimes} 
-  = sum{i in Sectors} RAW_MED_FLW[r, i, j, s];
+param MED_FLW_RSUM {r in Regions, j in Sectors} 
+  = sum{i in Sectors} RAW_MED_FLW[r, i, j];
 param SHR_MED_CES "sectoral share of i in j's CES intermediate aggregator"
-  {r in Regions, i in Sectors, j in Sectors, s in PathTimes}
-    = (RAW_MED_FLW[r, i, j, s] / MED_FLW_RSUM[r, j, s]) ** (1 / EPS_INV);
+  {r in Regions, i in Sectors, j in Sectors}
+    = (RAW_MED_FLW[r, i, j] / MED_FLW_RSUM[r, j]) ** (1 / EPS_INV);
     #= RAW_MED_FLW[r, i, j] ** (1 / EPS_INV);
 param SHR_LAB_CES "sectoral share of i in the CES labour aggregator"
-  {r in Regions, i in Sectors, s in PathTimes}
-    = SHR_LAB[r, i, s];
+  {r in Regions, i in Sectors}
+    = SHR_LAB[r, i];
 #-----------Armington share parameters
 param SHR_DOM_CCON 'domestic share in comp. consumption'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = RAW_DOM_CCON[r, i, s] / (RAW_DOM_CCON[r, i, s] + RAW_YPO_CCON[r, i, s]);
+  {r in Regions, i in Sectors}
+  = RAW_DOM_CCON[r, i] / (RAW_DOM_CCON[r, i] + RAW_YPO_CCON[r, i]);
 param SHR_YPO_CCON 'domestic share in comp. consumption'
-  {r in Regions, i in Sectors, s in PathTimes}
-  = 1 - SHR_DOM_CCON[r, i, s];
+  {r in Regions, i in Sectors}
+  = 1 - SHR_DOM_CCON[r, i];
 param SHR_DOM_CINV 'domestic share in composite investment flows'
-  {r in Regions, i in Sectors, j in Sectors, s in PathTimes}
-  = RAW_DOM_CINV[r, i, j, s]
-    / (RAW_DOM_CINV[r, i, j, s] + RAW_YPO_CINV[r, i, j, s]);
+  {r in Regions, i in Sectors, j in Sectors}
+  = RAW_DOM_CINV[r, i, j] / (RAW_DOM_CINV[r, i, j] + RAW_YPO_CINV[r, i, j]);
 param SHR_YPO_CINV 'import share in composite investment flows'
-  {r in Regions, i in Sectors, j in Sectors, s in PathTimes}
-  = 1 - SHR_DOM_CINV[r, i, j, s];
+  {r in Regions, i in Sectors, j in Sectors}
+  = 1 - SHR_DOM_CINV[r, i, j];
 param SHR_DOM_CMED 'domestic share in composite intermediate flows'
-  {r in Regions, i in Sectors, j in Sectors, s in PathTimes}
-  = RAW_DOM_CMED[r, i, j, s]
-    / (RAW_DOM_CMED[r, i, j, s] + RAW_YPO_CMED[r, i, j, s]);
+  {r in Regions, i in Sectors, j in Sectors}
+  = RAW_DOM_CMED[r, i, j] / (RAW_DOM_CMED[r, i, j] + RAW_YPO_CMED[r, i, j]);
 param SHR_YPO_CMED 'import share in composite intermediate flows'
-  {r in Regions, i in Sectors, j in Sectors, s in PathTimes}
-  = 1 - SHR_DOM_CMED[r, i, j, s];
+  {r in Regions, i in Sectors, j in Sectors}
+  = 1 - SHR_DOM_CMED[r, i, j];
 /*-----------------------------------------------------------------------------
 uncertainty parameters
 -----------------------------------------------------------------------------*/
@@ -497,20 +493,20 @@ Potential intermediate variables (substituted out during pre-solving)
 =============================================================================*/
 #-----------variety of consumption aggregator functions 
 var ccon 'Composite consumption good (Leontief over domestic and imports)'
-  {r in Regions, i in Sectors, t in LookForward, s in PathTimes}
-  = A_CCON * dcon[r, i, t] / SHR_DOM_CCON[r, i, s];
+  {r in Regions, i in Sectors, t in LookForward}
+  = A_CCON * dcon[r, i, t] / SHR_DOM_CCON[r, i];
 var ccon_sec_CD 'Composite consumption aggregate (Cobb-Douglas across sectors)'
-  {r in Regions, t in LookForward, s in PathTimes}
-  = prod{i in Sectors} ccon[r, i, t, s] ** (SHR_CON[r, i, s] * SCALE_CON);
+  {r in Regions, t in LookForward}
+  = prod{i in Sectors} ccon[r, i, t] ** (SHR_CON[r, i] * SCALE_CON);
 var con_sec_CD 'Cobb--Douglas consumption aggregate (across sectors)'
-  {r in Regions, t in LookForward, s in PathTimes}
-  = prod{i in Sectors} dcon[r, i, t] ** (SHR_CON[r, i, s] * SCALE_CON);
+  {r in Regions, t in LookForward}
+  = prod{i in Sectors} dcon[r, i, t] ** (SHR_CON[r, i] * SCALE_CON);
 var con_sec_CES 'Const. Elast. Subst. consumption aggregate (across sectors)'
-  {r in Regions, t in LookForward, s in PathTimes}
-  = (sum{i in Sectors} SHR_CON_CES[r, i, s] * dcon[r, i, t] ** RHO_CON)
+  {r in Regions, t in LookForward}
+  = (sum{i in Sectors} SHR_CON_CES[r, i] * dcon[r, i, t] ** RHO_CON)
     ** (RHO_CON_HAT * SCALE_CON); 
 var con_sec_SumPow 'Sum of power consumption aggregate (across sectors)'
-  {r in Regions, t in LookForward, s in PathTimes}
+  {r in Regions, t in LookForward}
   = sum{i in Sectors}
     SHR_CON[r, i] * dcon[r, i, t] ** GAMMA_HAT[r] / GAMMA_HAT[r];
 var con_sec_SumShr 'Sum of fractional powers from consumption shares'
@@ -945,63 +941,63 @@ set Sectors := A B C D E F G H I J K L M N O P Q R S;
 # read in the data
 #=============================================================================#
 load amplcsv.dll;
-let datadir := "julia/output/mcmc";
+let datadir := "julia/output/";
 #-----------------------------------------------------------------------------#
 # three indices: regions sectors and sectors: flows between sectors
 #-----------------------------------------------------------------------------#
 table rif IN "amplcsv"
-(datadir & "RAW_INV_FLW.csv"): [index0, index1, index2, index3], RAW_INV_FLW;
+(datadir & "RAW_INV_FLW.csv"): [index0, index1, index2], RAW_INV_FLW;
 read table rif;
 table rmf IN "amplcsv"
-(datadir & "RAW_MED_FLW.csv"): [index0, index1, index2, index3], RAW_MED_FLW;
+(datadir & "RAW_MED_FLW.csv"): [index0, index1, index2], RAW_MED_FLW;
 read table rmf;
 table rdcm IN "amplcsv"
-(datadir & "RAW_DOM_CMED.csv"): [index0, index1, index2, index3], RAW_DOM_CMED;
+(datadir & "RAW_DOM_CMED.csv"): [index0, index1, index2], RAW_DOM_CMED;
 read table rdcm;
 table rycm IN "amplcsv"
-(datadir & "RAW_YPO_CMED.csv"): [index0, index1, index2, index3], RAW_YPO_CMED;
+(datadir & "RAW_YPO_CMED.csv"): [index0, index1, index2], RAW_YPO_CMED;
 read table rycm;
 table smr IN "amplcsv"
-(datadir & "SHR_MED_ROW.csv"): [index0, index1, index2, index3], SHR_MED_ROW;
+(datadir & "SHR_MED_ROW.csv"): [index0, index1, index2], SHR_MED_ROW;
 read table smr;
 table smc IN "amplcsv"
-(datadir & "SHR_MED_COL.csv"): [index0, index1, index2, index3], SHR_MED_COL;
+(datadir & "SHR_MED_COL.csv"): [index0, index1, index2], SHR_MED_COL;
 read table smc;
 #-----------------------------------------------------------------------------#
 # two indices: regions and sectors
 #-----------------------------------------------------------------------------#
 table rcf IN "amplcsv"
-(datadir & "RAW_CON_FLW.csv"): [index0, index1, index2], RAW_CON_FLW;
+(datadir & "RAW_CON_FLW.csv"): [index0, index1], RAW_CON_FLW;
 read table rcf;
 table rdcc IN "amplcsv"
-(datadir & "RAW_DOM_CCON.csv"): [index0, index1, index2], RAW_DOM_CCON;
+(datadir & "RAW_DOM_CCON.csv"): [index0, index1], RAW_DOM_CCON;
 read table rdcc;
 table rycc IN "amplcsv"
-(datadir & "RAW_YPO_CCON.csv"): [index0, index1, index2], RAW_YPO_CCON;
+(datadir & "RAW_YPO_CCON.csv"): [index0, index1], RAW_YPO_CCON;
 read table rycc;
 table rko IN "amplcsv"
-(datadir & "RAW_KAP_OUT.csv"): [index0, index1, index2], RAW_KAP_OUT;
+(datadir & "RAW_KAP_OUT.csv"): [index0, index1], RAW_KAP_OUT;
 read table rko;
 table rlo IN "amplcsv"
-(datadir & "RAW_LAB_OUT.csv"): [index0, index1, index2], RAW_LAB_OUT;
+(datadir & "RAW_LAB_OUT.csv"): [index0, index1], RAW_LAB_OUT;
 read table rlo;
 table rmo IN "amplcsv"
-(datadir & "RAW_MED_OUT.csv"): [index0, index1, index2], RAW_MED_OUT;
+(datadir & "RAW_MED_OUT.csv"): [index0, index1], RAW_MED_OUT;
 read table rmo;
 table rl IN "amplcsv"
-(datadir & "REG_LAB.csv"): [index0, index1, index2], REG_LAB;
+(datadir & "REG_LAB.csv"): [index0, index1], REG_LAB;
 read table rl;
 #table fl IN "amplcsv"
-#(datadir & "REF_LAB.csv"): [index0, index1, index2], REF_LAB;
+#(datadir & "REF_LAB.csv"): [index0, index1], REF_LAB;
 #read table fl;
 table rxjo IN "amplcsv"
-(datadir & "RAW_XPO_JOUT.csv"): [index0, index1, index2], RAW_XPO_JOUT;
+(datadir & "RAW_XPO_JOUT.csv"): [index0, index1], RAW_XPO_JOUT;
 read table rxjo;
 table rdjo IN "amplcsv"
-(datadir & "RAW_DOM_JOUT.csv"): [index0, index1, index2], RAW_DOM_JOUT;
+(datadir & "RAW_DOM_JOUT.csv"): [index0, index1], RAW_DOM_JOUT;
 read table rdjo;
 table rors IN "amplcsv"
-(datadir & "RAW_REG_OUT.csv"): [index0, index1, index2], RAW_REG_OUT;
+(datadir & "RAW_REG_OUT.csv"): [index0, index1], RAW_REG_OUT;
 read table rors;
 display RAW_MED_OUT;
 #------------------------------------------------------------------------------
