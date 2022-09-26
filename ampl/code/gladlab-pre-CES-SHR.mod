@@ -321,16 +321,16 @@ param SHR_MED_OUT 'share of intermediates in output'
 #-----------output component shares for CES functions
 param SHR_KAP_OUT_CES 'importance of kapital in production'
   {r in Regions, i in Sectors}
-  = SHR_KAP_OUT[r, i];# ** (1 / EPS_OUT[i]);
+  = SHR_KAP_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_LAB_OUT_CES 'importance of labour in production'
   {r in Regions, i in Sectors}
-  = SHR_LAB_OUT[r, i];# ** (1 / EPS_OUT[i]);
+  = SHR_LAB_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_KAPLAB_OUT_CES 'combined importance of kapital and labour in prodn'
   {r in Regions, i in Sectors}
-  = SHR_KAPLAB_OUT[r, i];# ** (1 / EPS_OUT[i]);
+  = SHR_KAPLAB_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_MED_OUT_CES 'importance of intermediates in production'
   {r in Regions, i in Sectors}
-  = SHR_MED_OUT[r, i];# ** (1 / EPS_OUT[i]);
+  = SHR_MED_OUT[r, i] ** (1 / EPS_OUT[i]);
 param SHR_EFF_OUT 'share of efficiency component in output'
   default 1;
 #-----------consumption
@@ -342,7 +342,7 @@ param SHR_CON 'consumption weights for each good in utility (for Cobb-Doug)'
   #{r in Regions, i in Sectors} = RAW_CON_FLW[r, i];
 param SHR_CON_CES 'CES consumption weights for each good in utility'
   {r in Regions, i in Sectors}
-  = (RAW_CON_FLW[r, i] / CON_FLW_SUM[r]);# ** (1 / EPS_CON);
+  = (RAW_CON_FLW[r, i] / CON_FLW_SUM[r]) ** (1 / EPS_CON);
 #-----------labour
 param LAB_FLW_SUM {r in Regions}
   = sum{i in Sectors} REG_LAB[r, i];
@@ -355,18 +355,18 @@ param INV_FLW_RSUM {r in Regions, j in Sectors}
   = sum{i in Sectors} RAW_INV_FLW[r, i, j];
 param SHR_INV_CES "sectoral share of i in j's CES investment aggregator"
   {r in Regions, i in Sectors, j in Sectors}
-    = (RAW_INV_FLW[r, i, j] / INV_FLW_RSUM[r, j]);# ** (1 / EPS_INV);
+    = (RAW_INV_FLW[r, i, j] / INV_FLW_RSUM[r, j]) ** (1 / EPS_INV);
     #= RAW_INV_FLW[r, i, j] ** (1 / EPS_INV);
 #-----------inputs of sector i into j's intermediate bundle).
 param MED_FLW_RSUM {r in Regions, j in Sectors} 
   = sum{i in Sectors} RAW_MED_FLW[r, i, j];
 param SHR_MED_CES "sectoral share of i in j's CES intermediate aggregator"
   {r in Regions, i in Sectors, j in Sectors}
-    = (RAW_MED_FLW[r, i, j] / MED_FLW_RSUM[r, j]);# ** (1 / EPS_INV);
+    = (RAW_MED_FLW[r, i, j] / MED_FLW_RSUM[r, j]) ** (1 / EPS_INV);
     #= RAW_MED_FLW[r, i, j] ** (1 / EPS_INV);
 param SHR_LAB_CES "sectoral share of i in the CES labour aggregator"
   {r in Regions, i in Sectors}
-    = SHR_LAB[r, i];# ** (1 / EPS_LAB);
+    = SHR_LAB[r, i] ** (1 / EPS_LAB);
 #-----------Armington share parameters
 param SHR_DOM_CCON 'domestic share in comp. consumption'
   {r in Regions, i in Sectors}
@@ -1038,7 +1038,7 @@ let ALPHA_0 := 101828182846e-11;
 # regionalisation
 #=============================================================================#
 for {i in Sectors}{
-  let A[i] := 40e+0
+  let A[i] := 20e+0
     + (SHR_MED_ROW['GLD', i, i]
       / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT[i]) / RHO_OUT[i])
       * SCALE_OUT ** (1 / RHO_OUT[i])

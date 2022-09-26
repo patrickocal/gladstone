@@ -19,7 +19,7 @@ let outputdir := "ampl/output/";
 #option solver conopt;
 let shock := "historic";
 let reg := "aus";
-let filename := ("gladlab-A20-adjustable-opp-30pc" & solvername & "-"
+let filename := ("gladlab-SHRnoEPS" & solvername & "-"
                  & PInf & "-" & reg & "-EPS_OUT_C_E_700-" & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
@@ -98,14 +98,20 @@ for {s in PathTimes}{
     if s > 2 then {
       for {r in Regions, i in Sectors} {
         if EULER_RATIO[r, i, s - 1] < 95e-2 then {
-          display A[i];
-          let A[i] := A[i] * 101e-2;
-          display A[i];
+          display i, A[i];
+          let A[i] := A[i] * 99e-2;
         };
         if EULER_RATIO[r, i, s - 1] > 105e-2 then {
-          display A[i];
-          let A[i] := A[i] * 99e-2;
-          display A[i];
+          display i, A[i];
+          let A[i] := A[i] * 101e-2;
+        };
+        if EULER_RATIO[r, i, s - 1] > 110e-2 then {
+          display i, A[i];
+          let A[i] := A[i] * 101e-2;
+        };
+        if EULER_RATIO[r, i, s - 1] > 120e-2 then {
+          display i, A[i];
+          let A[i] := A[i] * 101e-2;
         };
       };
     };
