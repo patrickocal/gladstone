@@ -234,12 +234,12 @@ param MPMM 'marginal product of intermediate (the aggregator)'
   #= MPROD_FAC[r, i, s] * SHR_MED_OUT_CES[r, i]
   #  * CMED_SEC[r, i, s] ** (RHO_OUT[i] );
   default 1;
-#param GVA 'gross value added'
-#  {r in Regions, i in Sectors, s in PathTimes}
-#  = MPKK[r, i, s] + MPLL[r, i, s];
-#param VERT_BAL 'vertical balance (should be zero)'
-#  {r in Regions, i in Sectors, s in PathTimes}
-#  = E_OUT[r, i, s] - GVA[r, i, s] - MPMM[r, i, s];
+param GVA 'gross value added'
+  {r in Regions, i in Sectors, s in PathTimes}
+  = MPKK[r, i, s] + MPLL[r, i, s];
+param VERT_BAL 'vertical balance (should be zero)'
+  {r in Regions, i in Sectors, s in PathTimes}
+  = E_OUT[r, i, s] - GVA[r, i, s] - MPMM[r, i, s] / E_OUT[r, i, s];
 param AGG_OUT 'aggregate output per period'
   {r in Regions, s in PathTimes}
   default 1;
@@ -1006,9 +1006,9 @@ for {i in Sectors}{
 };
 let EPS_OUT['C'] := 700e-3;
 let EPS_OUT['E'] := 700e-3;
-let A_CON := 00200e-2; #increase this to increase labour and consumption
+let A_CON := 00100e-2; #increase this to increase labour and consumption
 let A_INV := 0090e-2;
-let A_MED := 0010e-2;
+let A_MED := 0050e-2;
 let A_VAL := 0001e-2;
 #let A_CMED := 1;
 let TAIL_SHR_CON := 045e-2;
@@ -1038,7 +1038,7 @@ let ALPHA_0 := 101828182846e-11;
 # regionalisation
 #=============================================================================#
 for {i in Sectors}{
-  let A[i] := 30e+0
+  let A[i] := 20e+0
     + (SHR_MED_ROW['GLD', i, i]
       / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT[i]) / RHO_OUT[i])
       * SCALE_OUT ** (1 / RHO_OUT[i])
@@ -1049,6 +1049,7 @@ for {i in Sectors}{
   let EPS_CMED['GLD', i, j] := 10e-2;
   };
 };
+let A['P'] := 120e-2 * A['P'];
 #let A['C'] := 110e-2 * A['C'];
 #let A['M'] := 130e-2 * A'M'];
 #let A['D'] := 070e-2 * A['D'];

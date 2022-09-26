@@ -1,8 +1,8 @@
 #=============================================================================#
 # initial and final period for PathTimes (the set over which we iterate)
 #=============================================================================#
-let PInf := 70;
-let PSup := 101;
+let PInf := 0;
+let PSup := 100;
 #=============================================================================#
 # are we solving or pulling in prior results? Comment out if solving:
 #let toggle_sol := "previous";
@@ -19,7 +19,7 @@ let outputdir := "ampl/output/";
 #option solver conopt;
 let shock := "historic";
 let reg := "aus";
-let filename := ("gladlab-" & solvername & "-"
+let filename := ("gladlab-A20-adjustable-opp-30pc" & solvername & "-"
                  & PInf & "-" & reg & "-EPS_OUT_C_E_700-" & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
@@ -93,7 +93,23 @@ for {s in PathTimes}{
       let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
     };
   };
-  #-----------RAS
+  #-----------RAS and calibration
+  if shock = "historic" then {
+    if s > 2 then {
+      for {r in Regions, i in Sectors} {
+        if EULER_RATIO[r, i, s - 1] < 95e-2 then {
+          display A[i];
+          let A[i] := A[i] * 101e-2;
+          display A[i];
+        };
+        if EULER_RATIO[r, i, s - 1] > 105e-2 then {
+          display A[i];
+          let A[i] := A[i] * 99e-2;
+          display A[i];
+        };
+      };
+    };
+  };
   # see glad-mcmc.run
   #-----------update kapital (CJ call this the simulation step)
   fix {r in Regions, j in Sectors} kap[r, j, LInf] := KAP[r, j, s];
@@ -241,7 +257,7 @@ for {s in PathTimes}{
     KAP['GLD', 'O', s] / E_OUT['GLD', 'O', s],
     max{r in Regions, i in Sectors, j in Sectors, ii in Sectors}
       abs(JAC_ID[r, i, j, ii, s]),
-    MAX_DIFF_PROP_OUT[r, s],
+    max{r in Regions} MAX_DIFF_PROP_OUT[r, s],
     s, _ampl_elapsed_time, _total_solve_time, ctime();
   # for {r in Regions, i in Sectors}{
   # if s > PInf then display EULER_RATIO[r, i, s] - EULER_RATIO[r, i, s - 1];
