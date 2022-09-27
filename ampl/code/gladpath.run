@@ -19,7 +19,7 @@ let outputdir := "ampl/output/";
 #option solver conopt;
 let shock := "historic";
 let reg := "aus";
-let filename := ("gladlab-SHRnoEPS" & solvername & "-"
+let filename := ("gladlab-SHRnoEPS-adaptAandEPSopp" & solvername & "-"
                  & PInf & "-" & reg & "-EPS_OUT_C_E_700-" & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
@@ -41,14 +41,21 @@ table prcres OUT "amplxl"
   (outputdir & "prc-" & filename & ".xlsx") "Results":
   [Sectors, PathTimes],
   PRC_DOM, DUAL_MKT_CLR;
+table prod OUT "amplxl"
+  (outputdir & "prod-" & filename & ".xlsx"):
+  [Sectors], A;
 #-----------------------------------------------------------------------------#
 # initial kap and growth factor if starting from a future point in time
 #-----------------------------------------------------------------------------#
 load amplxl.dll;
+load amplcsv.dll;
 let datadir := "ampl/data/";
 table kapxl IN "amplxl"
   (datadir & "KAP-" & PInf & "-reregionalised" & ".xlsx") "Sheet1":
   [Regions, Sectors, PathTimes], KAP;
+#table Ain IN "amplcsv"
+#(datadir & "PROD.csv"): [Sectors], A;
+#read table Ain;
 if shock in {"shock", "noshock"} then {
   read table kapxl; #table inkap IN "amplcsv"
 };
@@ -95,7 +102,7 @@ for {s in PathTimes}{
   };
   #-----------RAS and calibration
   if shock = "historic" then {
-    if s > 2 then {
+    if 2 < s < 68 then {
       for {r in Regions, i in Sectors} {
         if EULER_RATIO[r, i, s - 1] < 95e-2 then {
           display i, A[i];
@@ -113,9 +120,28 @@ for {s in PathTimes}{
           display i, A[i];
           let A[i] := A[i] * 101e-2;
         };
+        if EULER_RATIO[r, i, s - 1] > 130e-2 then {
+          display i, A[i];
+          let A[i] := A[i] * 101e-2;
+        };
       };
     };
   };
+  if shock = "historic" then {
+    if 1 < s then {
+      for {r in Regions, i in Sectors} {
+        if DIFF_PROP_OUT[r, i, s - 1] < -1e-2 then {
+          display i, EPS_OUT[i];
+          let EPS_OUT[i] := EPS_OUT[i] * 997e-3;
+        };
+        if DIFF_PROP_OUT[r, i, s - 1] > 1e-2 then {
+          display i, EPS_OUT[i];
+          let EPS_OUT[i] := EPS_OUT[i] * 1003e-3;
+        };
+      };
+    };
+  };
+
   # see glad-mcmc.run
   #-----------update kapital (CJ call this the simulation step)
   fix {r in Regions, j in Sectors} kap[r, j, LInf] := KAP[r, j, s];
@@ -234,6 +260,7 @@ for {s in PathTimes}{
   write table res;
   write table aggres;
   write table prcres;
+  write table prod;
   #write table kp;
   display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
     min{r in Regions, i in Sectors} E_OUT[r, i, s],

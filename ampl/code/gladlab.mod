@@ -1032,7 +1032,7 @@ for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
   if SHR_MED_CES[r, i, j] < 1e-12 then
     fix dmed[r, i, j, t] := 0;
 };
-let SHR_EFF_OUT := 8e-1;
+let SHR_EFF_OUT := 10e-2;
 let ALPHA_0 := 101828182846e-11;
 #=============================================================================#
 # regionalisation
@@ -1049,7 +1049,8 @@ for {i in Sectors}{
   let EPS_CMED['GLD', i, j] := 10e-2;
   };
 };
-let A['P'] := 120e-2 * A['P'];
+let A['E'] := 120e-2 * A['E'];
+#let A['P'] := 120e-2 * A['P'];
 #let A['C'] := 110e-2 * A['C'];
 #let A['M'] := 130e-2 * A'M'];
 #let A['D'] := 070e-2 * A['D'];
