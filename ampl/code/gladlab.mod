@@ -1004,8 +1004,8 @@ for {i in Sectors}{
   #let A[i] := 111e-1;
   let EPS_OUT[i] := 0800e-3;
 };
-let EPS_OUT['C'] := 700e-3;
-let EPS_OUT['E'] := 700e-3;
+#let EPS_OUT['C'] := 700e-3;
+#let EPS_OUT['E'] := 700e-3;
 let A_CON := 00100e-2; #increase this to increase labour and consumption
 let A_INV := 0090e-2;
 let A_MED := 0050e-2;

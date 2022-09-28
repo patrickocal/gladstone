@@ -2,7 +2,7 @@
 # initial and final period for PathTimes (the set over which we iterate)
 #=============================================================================#
 let PInf := 0;
-let PSup := 100;
+let PSup := 200;
 #=============================================================================#
 # are we solving or pulling in prior results? Comment out if solving:
 #let toggle_sol := "previous";
@@ -19,8 +19,8 @@ let outputdir := "ampl/output/";
 #option solver conopt;
 let shock := "historic";
 let reg := "aus";
-let filename := ("gladlab-SHRnoEPS-adaptAandEPSopp" & solvername & "-"
-                 & PInf & "-" & reg & "-EPS_OUT_C_E_700-" & shock);
+let filename := ("gladlab-SHRnoEPS-adaptAandEPSuntils70-PInf200"
+  & solvername & "-" & PInf & "-" & reg & shock);
 let outputdir := ("ampl/output/" & reg & shock & "/");
 #=============================================================================#
 # declare output tables
@@ -41,9 +41,9 @@ table prcres OUT "amplxl"
   (outputdir & "prc-" & filename & ".xlsx") "Results":
   [Sectors, PathTimes],
   PRC_DOM, DUAL_MKT_CLR;
-table prod OUT "amplxl"
-  (outputdir & "prod-" & filename & ".xlsx"):
-  [Sectors], A;
+table prdeps OUT "amplxl"
+  (outputdir & "prdeps-" & filename & ".xlsx"):
+  [Sectors], A, EPS_OUT;
 #-----------------------------------------------------------------------------#
 # initial kap and growth factor if starting from a future point in time
 #-----------------------------------------------------------------------------#
@@ -102,7 +102,7 @@ for {s in PathTimes}{
   };
   #-----------RAS and calibration
   if shock = "historic" then {
-    if 2 < s < 68 then {
+    if 2 < s < 71 then {
       for {r in Regions, i in Sectors} {
         if EULER_RATIO[r, i, s - 1] < 95e-2 then {
           display i, A[i];
@@ -128,7 +128,7 @@ for {s in PathTimes}{
     };
   };
   if shock = "historic" then {
-    if 1 < s then {
+    if 1 < s < 71 then {
       for {r in Regions, i in Sectors} {
         if DIFF_PROP_OUT[r, i, s - 1] < -1e-2 then {
           display i, EPS_OUT[i];
@@ -260,7 +260,7 @@ for {s in PathTimes}{
   write table res;
   write table aggres;
   write table prcres;
-  write table prod;
+  write table prdeps;
   #write table kp;
   display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
     min{r in Regions, i in Sectors} E_OUT[r, i, s],
