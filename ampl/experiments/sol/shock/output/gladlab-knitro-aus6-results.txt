@@ -1,0 +1,91 @@
+s = 6
+ctime() = 'Thu Sep 29 22:05:39 2022'
+_ampl_elapsed_time = 0.130166
+_total_solve_time = 2.07287
+_total_solve_system_time = 0.043233
+_total_solve_user_time = 2.02964
+
+s = 6
+ctime() = 'Thu Sep 29 22:07:30 2022'
+_ampl_elapsed_time = 0.128438
+_total_solve_time = 2.1898
+_total_solve_system_time = 0.039226
+_total_solve_user_time = 2.15058
+
+s = 6
+ctime() = 'Thu Sep 29 22:15:03 2022'
+_ampl_elapsed_time = 0.128966
+_total_solve_time = 2.09371
+_total_solve_system_time = 0.043162
+_total_solve_user_time = 2.05055
+
+s = 6
+ctime() = 'Thu Sep 29 22:18:53 2022'
+_ampl_elapsed_time = 0.133215
+_total_solve_time = 9.57928
+_total_solve_system_time = 0.106927
+_total_solve_user_time = 9.47236
+
+s = 6
+ctime() = 'Thu Sep 29 22:27:08 2022'
+_ampl_elapsed_time = 37.6789
+_total_solve_time = 8.73857
+_total_solve_system_time = 0.104946
+_total_solve_user_time = 8.63363
+
+s = 6
+ctime() = 'Thu Sep 29 22:39:17 2022'
+_ampl_elapsed_time = 0.153191
+_total_solve_time = 14.7518
+_total_solve_system_time = 0.146045
+_total_solve_user_time = 14.6057
+
+s = 6
+ctime() = 'Thu Sep 29 22:59:46 2022'
+_ampl_elapsed_time = 0.576307
+_total_solve_time = 29.1772
+_total_solve_system_time = 0.378335
+_total_solve_user_time = 28.7989
+
+s = 6
+ctime() = 'Thu Sep 29 23:13:24 2022'
+_ampl_elapsed_time = 0.124984
+_total_solve_time = 14.2467
+_total_solve_system_time = 0.113405
+_total_solve_user_time = 14.1333
+
+s = 6
+ctime() = 'Thu Sep 29 23:30:38 2022'
+_ampl_elapsed_time = 0.124733
+_total_solve_time = 7.4814
+_total_solve_system_time = 0.083964
+_total_solve_user_time = 7.39744
+
+s = 6
+ctime() = 'Thu Sep 29 23:35:22 2022'
+_ampl_elapsed_time = 23.9171
+_total_solve_time = 7.11671
+_total_solve_system_time = 0.07318
+_total_solve_user_time = 7.04353
+
+s = 6
+ctime() = 'Thu Sep 29 23:45:17 2022'
+_ampl_elapsed_time = 7.70069
+_total_solve_time = 7.08871
+_total_solve_system_time = 0.07892
+_total_solve_user_time = 7.00979
+
+s = 6
+ctime() = 'Thu Sep 29 23:47:22 2022'
+_ampl_elapsed_time = 4.34958
+_total_solve_time = 7.51764
+_total_solve_system_time = 0.09595
+_total_solve_user_time = 7.42169
+
+s = 6
+ctime() = 'Thu Sep 29 23:49:08 2022'
+_ampl_elapsed_time = 4.65902
+_total_solve_time = 7.40445
+_total_solve_system_time = 0.083784
+_total_solve_user_time = 7.32066
+

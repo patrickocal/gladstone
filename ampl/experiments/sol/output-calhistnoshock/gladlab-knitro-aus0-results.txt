@@ -1,0 +1,14 @@
+s = 0
+ctime() = 'Thu Sep 29 23:08:49 2022'
+_ampl_elapsed_time = 0.138558
+_total_solve_time = 10.2891
+_total_solve_system_time = 0.101871
+_total_solve_user_time = 10.1872
+
+s = 0
+ctime() = 'Thu Sep 29 23:10:53 2022'
+_ampl_elapsed_time = 0.142501
+_total_solve_time = 10.1077
+_total_solve_system_time = 0.094733
+_total_solve_user_time = 10.013
+

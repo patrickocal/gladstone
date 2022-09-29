@@ -1,0 +1,7 @@
+s = 134
+ctime() = 'Wed Sep 28 19:28:36 2022'
+_ampl_elapsed_time = 175.698
+_total_solve_time = 1637.88
+_total_solve_system_time = 18.8391
+_total_solve_user_time = 1619.04
+
