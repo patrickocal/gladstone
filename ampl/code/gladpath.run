@@ -1,15 +1,15 @@
 #=============================================================================#
 #-----------final period for PathTimes (set over which we iterate)
-let PSup := 010;
+let PSup := 200;
 #-----------final period for plan (LookForward horizon)
 let LSup := 10;
 #=============================================================================#
 #-----------EDIT THIS SECTION-------------------------------------------------#
 #-----------the name of the experiment
-let experimentname := "gld1";
+let experimentname := "gld0";
 #-----------for generating a history set shock := "" otherwise ...
-let shock := "";
-let shock := "shock";
+let shock := $shock; # this is a command line variable, alternatively:
+#let shock := "";
 #-----------choose calibration endtime (default is 1/3*PSup);
 #let caltime := 10;
 #-----------or choose step where the shock will happen (default is 2/3*PSup);
@@ -19,18 +19,15 @@ let shock := "shock";
 #-----------which solver are we using? Comment out to use the default: knitro.
 #let solvername := "conopt";
 #option solver conopt;
-let reg := "gld";
+let reg := "GLD";
+if solvername = "conopt" then option solver conopt;
+if solvername = "knitro" then option solver knitro;
 let filename := ("gladlab-" & solvername & "-" & reg);
 #=============================================================================#
 #-----------setup for output of results (should be no need to edit)
-if shock = "shock" then 
-  let instancename := (experimentdir & "calhistnoshock/" & filename);
-if shock != "shock" then
-  let instancename := (experimentdir & shock & "/output" & filename);
 #-----------by default set PInf to be the period before shocktime
 if shock != "" then let PInf := shocktime - 1;
-if solvername = "conopt" then option solver conopt;
-if solvername = "knitro" then option solver knitro;
+display PInf;
 option show_stats 1;
 #=============================================================================#
 #-----------custom start time (needs to be after previous subsection)
@@ -59,6 +56,8 @@ read table rl;
 read table rxjo;
 read table rdjo;
 read table rors;
+display REG_LAB;
+display RAW_REG;
 #------------------------------------------------------------------------------
 #-----------opportunity to tune the calibration factors (still part of data)
 #------------------------------------------------------------------------------
@@ -176,9 +175,16 @@ for {s in PathTimes}{
   objective pres_disc_val[s];
   #-----------update initial kapital (CJ simulation step)
   for {r in Regions, i in Sectors} {
-    if s = PInf then let KAP[r, i, s] := INIT_KAP[r, i];
+    let KAP[r, i, s] := INIT_KAP[r, i];
     fix kap[r, i, LInf] := KAP[r, i, s];
+    display kap[r, i, LInf];
   };
+  #-----------change output directory for shocks for the table handler
+  if shock = "shock" then let outputdir := shockoutputdir;
+  write table initkap[s];
+  #-----------change outputdir back to default output directory
+  if shock = "shock" then
+    let outputdir := (experimentdir & "output-calhistnoshock/");
   let ALPHA := ALPHA_0 ** s;
   #-----------RAS and calibration
   if 2 < s < caltime then {
@@ -334,7 +340,6 @@ for {s in PathTimes}{
     if s > PInf then 
     let GROWTH_OUT[r, i, s] :=
       (E_OUT[r, i, s] - E_OUT[r, i, s - 1]) / E_OUT[r, i, s - 1];
-   
   #-----------Euler integrand for Cobb--Douglas production
     #let EULER_INTEGRAND[r, i, s] :=  DUAL_KAP[r, i, s] * (1 - DELTA[i]) 
     #  + DUAL_MKT_CLR[i, s] * (
@@ -359,7 +364,6 @@ for {s in PathTimes}{
   write table res;
   write table aggres;
   write table prcres;
-  write table initkap[s];
   if shock = "" then write table prdeps;
   #-----------return to default output directory
   let outputdir := (experimentdir & "output-calhistnoshock/");

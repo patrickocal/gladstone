@@ -8,7 +8,16 @@ codedir = "./"
 include(codedir * "concordance.jl")
 
 # Directory for output (and input while pulling template from .csv)
-outputdir = "julia/output/"
+outputdir = (if length(ARGS) == 0
+               "julia/output/";
+             elseif length(ARGS) == 1
+               ARGS[1];
+             else
+               println("Can only print to one directory at once.");
+             end
+            );
+
+datadir = "julia/output/"
 region = ["GLD"]
 refreg = ["AUS"]
 # Name of column that contains the row indices
@@ -28,14 +37,14 @@ tablepopname = "popreg"
 tableoutname = "outperdiv"
 #tbl8 = "tbl8"
 #tbl5 = "tbl5"
-# Pull in tables from .csv files, ultimately it will come from the RAS code
-tbl8 = CSV.read(outputdir * table8name * ".csv", DataFrame)
-tbl5 = CSV.read(outputdir * table5name * ".csv", DataFrame)
-tblkap = CSV.read(outputdir * tablekapname * ".csv", DataFrame)
-tbllab = CSV.read(outputdir * tablelabname * ".csv", DataFrame)
-tbldiff = CSV.read(outputdir * tablediffname * ".csv", DataFrame)
-tbloutperdiv = CSV.read(outputdir * tableoutname * ".csv", DataFrame)
-#tblpop = CSV.read(outputdir * tablepopname * ".csv", DataFrame)
+# Pull in tables from .csv files
+tbl8 = CSV.read(datadir * table8name * ".csv", DataFrame)
+tbl5 = CSV.read(datadir * table5name * ".csv", DataFrame)
+tblkap = CSV.read(datadir * tablekapname * ".csv", DataFrame)
+tbllab = CSV.read(datadir * tablelabname * ".csv", DataFrame)
+tbldiff = CSV.read(datadir * tablediffname * ".csv", DataFrame)
+tbloutperdiv = CSV.read(datadir * tableoutname * ".csv", DataFrame)
+#tblpop = CSV.read(datadir * tablepopname * ".csv", DataFrame)
 
 # Quickly mock up tbldiff from tables 5 and 8, ultimately it will come 
 # from the RAS code #include -d at the top of this file
@@ -192,11 +201,11 @@ T5[:, "T6"] -= T5[:, "Q7"];
 outtocsv("RAW_DOM_JOUT", prepsubframe(T5, sectorcodes, ["T6"]));
 
 # reference REF_LAB
-outtocsv("REF_LAB", prepsubframe(tbllab, sectorcodes, reg));
+outtocsv("REF_LAB", prepsubframe(tbllab, sectorcodes, region));
 # regional REG_LAB
 outtocsv("REG_LAB", prepsubframe(tbllab, sectorcodes, region));
 # regional AUS_POP
-#outtocsv("AUS_POP", prepsubframe(tblpop, sectorcodes, reg));
+#outtocsv("AUS_POP", prepsubframe(tblpop, sectorcodes, region));
 # regional REG_POP
 #outtocsv("REG_POP", prepsubframe(tblpop, sectorcodes, region[1]));
 # RAW_DOM_CINV 
@@ -223,6 +232,6 @@ outtocsv("SHR_MED_COL", prepsubframe(colshr, sectorcodes, sectorcodes));
 
 
 # RAW_REG_OUT: output per region and division
-outtocsv("RAW_REG_OUT", prepsubframe(tbloutperdiv, sectorcodes, reg)); 
+outtocsv("RAW_REG_OUT", prepsubframe(tbloutperdiv, sectorcodes, region)); 
 
-println("done saving to julia/output/*.csv")
+println("done saving to " * outputdir)
