@@ -1,0 +1,403 @@
+#=============================================================================#
+#-----------final period for PathTimes (set over which we iterate)
+let PSup := 200;
+#-----------final period for plan (LookForward horizon)
+let LSup := 10;
+#=============================================================================#
+#-----------EDIT THIS SECTION-------------------------------------------------#
+#-----------the name of the experiment
+let experimentname := "gld0";
+#-----------for generating a history set shock := "" otherwise ...
+let shock := $shock; # this is a command line variable, alternatively:
+#let shock := "";
+#-----------choose calibration endtime (default is 1/3*PSup);
+#let caltime := 10;
+#-----------or choose step where the shock will happen (default is 2/3*PSup);
+#let shocktime := 5;
+#-----------are we solving or pulling in prior results? Comment out if solving:
+#let toggle_sol := "previous";
+#-----------which solver are we using? Comment out to use the default: knitro.
+#let solvername := "conopt";
+#option solver conopt;
+let reg := "GLD";
+if solvername = "conopt" then option solver conopt;
+if solvername = "knitro" then option solver knitro;
+let filename := ("gladlab-" & solvername & "-" & reg);
+#=============================================================================#
+#-----------setup for output of results (should be no need to edit)
+#-----------by default set PInf to be the period before shocktime
+if shock != "" then let PInf := shocktime - 1;
+display PInf;
+option show_stats 1;
+#=============================================================================#
+#-----------custom start time (needs to be after previous subsection)
+#let PInf := 4;
+#=============================================================================#
+# Data section
+#=============================================================================#
+data;
+#-----------1xANZdiv model
+let Regions := {"GLD"};
+let Sectors := {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
+  "M", "N", "O", "P", "Q", "R", "S"};
+read table rif;
+read table rmf;
+read table rdcm;
+read table rycm;
+read table smr;
+read table smc;
+read table rcf;
+read table rdcc;
+read table rycc;
+read table rko;
+read table rlo;
+read table rmo;
+read table rl;
+read table rxjo;
+read table rdjo;
+read table rors;
+display REG_LAB;
+display RAW_REG_OUT;
+#------------------------------------------------------------------------------
+#-----------opportunity to tune the calibration factors (still part of data)
+#------------------------------------------------------------------------------
+let BETA := 950e-3;
+#param aA := 094e-2;
+#param c20A := 090e-2;
+#param c10A := 100e-2;
+#let A["P"] := 40e-2;
+#let A["H"] := 20e-2;
+#let A["N"] := 20e-2;
+#let A["R"] := 10e-2;
+#let A["S"] := 20e-2;
+for {i in Sectors}{
+  let DELTA[i] := 05e-2;
+  let PHI_ADJ[i] := 400e-2;
+  #let A[i] := 111e-1;
+  let EPS_OUT[i] := 0800e-3;
+};
+#let EPS_OUT['C'] := 700e-3;
+#let EPS_OUT['E'] := 700e-3;
+let A_CON := 00100e-2; #increase this to increase labour and consumption
+let A_INV := 0090e-2;
+let A_MED := 0050e-2;
+let A_VAL := 0001e-2;
+#let A_CMED := 1;
+let TAIL_SHR_CON := 045e-2;
+
+let EPS_INV := 0300e-3;
+let EPS_MED := 0400e-3;
+let EPS_CON := 0999e-3;
+let EPS_LAB := 050e-2;
+
+let SCALE_CON := 400e-3;
+let SCALE_INV := 999e-3;
+let SCALE_MED := 999e-3;
+let SCALE_OUT := 999e-3;
+let SCALE_LAB := 600e-2;
+let SCALE_CMED := 990e-3;
+let SCALE_CINV := 990e-3;
+for {r in Regions, i in Sectors, j in Sectors, t in LookForward}{
+#  fix lab[r, j, t] := 33e-2;
+  if SHR_INV_CES[r, i, j] < 1e-12 then
+    fix dinv[r, i, j, t] := 0;
+  if SHR_MED_CES[r, i, j] < 1e-12 then
+    fix dmed[r, i, j, t] := 0;
+};
+let SHR_EFF_OUT := 10e-2;
+let ALPHA_0 := 102828182846e-11;
+#=============================================================================#
+# regionalisation
+#=============================================================================#
+for {i in Sectors}{
+  let A[i] := 40e+0
+    + (SHR_MED_ROW['GLD', i, i]
+      / SHR_MED_COL['GLD', i, i]) ** ((1 - RHO_OUT[i]) / RHO_OUT[i])
+      * SCALE_OUT ** (1 / RHO_OUT[i])
+    + 10 * RAW_REG_OUT['GLD', i]
+      / sum{j in Sectors} RAW_REG_OUT['GLD', j];
+  let EPS_JOUT['GLD', i] := 10e-2;
+  for {j in Sectors}{
+  let EPS_CMED['GLD', i, j] := 10e-2;
+  };
+};
+#let A['E'] := 120e-2 * A['E'];
+#let A['P'] := 120e-2 * A['P'];
+#let A['C'] := 110e-2 * A['C'];
+#let A['M'] := 130e-2 * A'M'];
+#let A['D'] := 070e-2 * A['D'];
+#let A['L'] := 070e-2 * A['L'];
+#let A['K'] := 070e-2 * A['K'];
+let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
+let RAW_MED_FLW['GLD', 'B', 'C'] := RAW_MED_FLW['GLD', 'B', 'C'] * 200e-2;
+let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 150e-2;
+let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
+let RAW_YPO_CMED['GLD', 'B', 'C']
+  := RAW_YPO_CMED['GLD', 'B', 'C'] * 500e-2;
+## finally, the subsidy
+let RAW_KAP_OUT['GLD', 'C'] := RAW_KAP_OUT['GLD', 'C'] + 174000; 
+display A;
+#let A['B'] := 50e-2;
+#let KAP['GLD', 'B', 0] := 200e-2;
+#let KAP['GLD', 'R', 0] := 20e-2;
+#let KAP['GLD', 'S', 0] := 40e-2;
+#let KAP['GLD', 'N', 0] := 40e-2;
+#let KAP['GLD', 'H', 0] := 50e-2;
+#let KAP['GLD', 'P', 0] := 50e-2;
+#-----------------------------------------------------------------------------#
+#-----------initial kap and other parameters (if starting from a future time)
+#-----------------------------------------------------------------------------#
+load amplxl.dll;
+load amplcsv.dll;
+if PInf > 0 then {
+  read table initkap[PInf];
+  read table prdeps;
+};
+#for {r in Regions, i in Sectors}{
+#  let KAP[r, i, PInf]
+#    := 1;
+#    := RAW_KAP_OUT[r, i] / sum{j in Sectors} RAW_KAP_OUT[r, j]
+#      + PROP_OUT_PER_SEC[r, i];
+#      + 50e-2
+#      ;
+#};
+display INIT_KAP;
+display A, EPS_OUT;
+#=============================================================================#
+update data;
+#=============================================================================#
+#-----------solve the model along a given path
+#=============================================================================#
+for {s in PathTimes}{
+  display s, ctime();
+  display outputdir, datadir;
+  display experimentname, filename;
+  objective pres_disc_val[s];
+  #-----------update initial kapital (CJ simulation step)
+  for {r in Regions, i in Sectors} {
+    let KAP[r, i, s] := INIT_KAP[r, i];
+    fix kap[r, i, LInf] := KAP[r, i, s];
+    display kap[r, i, LInf];
+  };
+  #-----------change output directory for shocks for the table handler
+  if shock = "shock" then let outputdir := shockoutputdir;
+  write table initkap[s];
+  #-----------change outputdir back to default output directory
+  if shock = "shock" then
+    let outputdir := (experimentdir & "output-calhistnoshock/");
+  let ALPHA := ALPHA_0 ** s;
+  #-----------RAS and calibration
+  if 2 < s < caltime then {
+    for {r in Regions, i in Sectors} {
+      if EULER_RATIO[r, i, s - 1] < 95e-2 then {
+        display i, A[i];
+        let A[i] := A[i] * 99e-2;
+      };
+      if EULER_RATIO[r, i, s - 1] > 105e-2 then {
+        display i, A[i];
+        let A[i] := A[i] * 101e-2;
+      };
+      if EULER_RATIO[r, i, s - 1] > 110e-2 then {
+        display i, A[i];
+        let A[i] := A[i] * 101e-2;
+      };
+      if EULER_RATIO[r, i, s - 1] > 120e-2 then {
+        display i, A[i];
+        let A[i] := A[i] * 101e-2;
+      };
+      if EULER_RATIO[r, i, s - 1] > 130e-2 then {
+        display i, A[i];
+        let A[i] := A[i] * 101e-2;
+      };
+    };
+  };
+  if 1 < s <= caltime then {
+    for {r in Regions, i in Sectors} {
+      if DIFF_PROP_OUT[r, i, s - 1] < -1e-2 then {
+        display i, EPS_OUT[i];
+        let EPS_OUT[i] := EPS_OUT[i] * 997e-3;
+      };
+      if DIFF_PROP_OUT[r, i, s - 1] > 1e-2 then {
+        display i, EPS_OUT[i];
+        let EPS_OUT[i] := EPS_OUT[i] * 1003e-3;
+      };
+    };
+  };
+  #-----------display some parameter values:
+  display PHI_ADJ['A'],
+    LabSup, LSup, ALPHA_0, ALPHA, BETA, A['O'],
+    SHR_CON['GLD', 'O'], SHR_LAB['GLD', 'O'],
+    SHR_INV_CES['GLD', 'A', 'O'], DELTA['O'];
+  display A_CON, A_INV, A_MED, A_VAL, A_LAB['GLD', 0],
+    EPS_INV, EPS_MED, EPS_CON, EPS_OUT, EPS_LAB,
+    RHO_INV,  RHO_MED,  RHO_CON, RHO_OUT['A'], RHO_LAB,
+    SCALE_CON, SCALE_INV, SCALE_MED, SCALE_OUT, SCALE_LAB,
+    SCALE_CMED, SCALE_CINV;
+  #-----------pull in a previous run
+  if toggle_sol = "previous" then solution (instancename & ".sol");
+  if toggle_sol = "solve" then {
+    #-----------calibrate and generate a history/burn-in for kapital
+    if shock = "" then {
+      display s;
+      #-----------default: call the solver
+      let instancename := (outputdir & filename & s);
+      #-------write out an nl file this means that a sol file is also generated
+      write ("b" & instancename);
+      #-------actually solve
+      solve;
+      #-------store solve times to ..results.txt
+      display s, ctime(), _ampl_elapsed_time, _total_solve_time,
+          _total_solve_system_time, _total_solve_user_time
+          >> (instancename & "-results.txt");
+    };
+    #-----------the shock path
+    if shock = "shock" then {
+      display s;
+      let instancename := (shockoutputdir & filename & s);
+        if s = shocktime then {
+          let A['C'] := A['C'] * 080e-2;
+          let RAW_XPO_JOUT['GLD', 'C']
+            := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
+          let RAW_MED_FLW['GLD', 'B', 'C']
+            := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
+          let RAW_MED_FLW['GLD', 'C', 'C']
+            := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
+          let RAW_MED_FLW['GLD', 'D', 'C']
+            := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
+          let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
+        };
+      #-------write out an nl file this means that a sol file is also generated
+      write ("b" & instancename);
+      #-------actually solve
+      solve;
+      #-------store solve times to ..results.txt
+      display s, ctime(), _ampl_elapsed_time, _total_solve_time,
+          _total_solve_system_time, _total_solve_user_time
+          >> (instancename & "-results.txt");
+    };
+  };
+  #-----------display step values
+  display E_out["GLD", "O", LInf], con["GLD", "O", LInf],
+  inv_sec["GLD", "O", LInf], kap["GLD", "O", LInf],
+  lab["GLD", "O", LInf], kap_transition["GLD", "O", LInf],
+  market_clearing["O", LInf];
+  #-----------store solution values
+  for {r in Regions, i in Sectors}{
+    #-------store next period's kapital in prep'n for the simulation step
+    let KAP[r, i, s + 1] := kap[r, i, LInf + 1];
+    let INIT_KAP[r, i] := KAP[r, i, s + 1];
+    #-----------save observed path values of variables to parameter
+    let CON[r, i, s] := con[r, i, LInf];
+    let INV_SEC[r, i, s] := inv_sec[r, i, LInf];
+    let INV_CSUM[r, i, s] := sum{j in Sectors} inv[r, i, j, LInf];
+    let MED_CSUM[r, i, s] := sum{j in Sectors} med[r, i, j, LInf];
+    let LAB[r, i, s] := lab[r, i, LInf];
+    let E_OUT[r, i, s] := E_out[r, i, LInf];
+    let DOM[r, i, s] := dom[r, i, LInf];
+    let SHR_DOM[r, i, s] := shr_dom[r, i, LInf];
+    let ADJ_COST_KAP[r, i, s] := adj_cost_kap[r, i, LInf];
+    let DUAL_KAP[r, i, s] := kap_transition[r, i, LInf];
+    let XPO[r, i, s] := xpo[r, i, LInf];
+    let YMED_CSUM[r, i, s] := sum{j in Sectors} ymed[r, i, j, LInf];
+    let CMED_SEC[r, i, s] := cmed_sec_CES[r, i, LInf];
+    let MPROD_FAC[r, i, s] := mprod_fac[r, i, LInf];
+    let MPKK[r, i, s] := mpkk[r, i, LInf];
+    let MPLL[r, i, s] := mpll[r, i, LInf];
+    let MPMM[r, i, s] := mpmm[r, i, LInf];
+    let AGG_KAP[r, s] := sum{ii in Sectors} kap[r, ii, LInf];
+    let AGG_OUT[r, s] := sum{ii in Sectors} E_out[r, ii, LInf];
+    let AGG_CON[r, s] := sum{ii in Sectors} con[r, ii, LInf];
+    let AGG_XPO[r, s] := sum{ii in Sectors} xpo[r, ii, LInf];
+    let AGG_YMED_CSUM[r, s] :=
+      sum{ii in Sectors}(sum{j in Sectors} ymed[r, ii, j, LInf]);
+    let PRC_DOM[i, s] := prc_dom[i, LInf];
+    for {j in Sectors, ii in Sectors}{
+    let JAC_ID[r, i, j, ii, s] := inv[r, i, j, LInf] * inv[r, ii, ii, LInf]
+          * SHR_INV_CES[r, i, ii] * SHR_INV_CES[r, ii, j] 
+        - inv[r, i, ii, LInf] * inv[r, ii, j, LInf]
+          * SHR_INV_CES[r, i, j] * SHR_INV_CES[r, ii, ii];
+    };
+  };
+  #    let TAIL_SHR_CON := (sum{r in Regions, i in Sectors} CON[r, i, s])
+  #      / (sum{r in Regions, i in Sectors} E_OUT[r, i, s]);
+  #display E_OUT, CON, INV_CSUM, MED_CSUM, ADJ_COST_KAP, LAB, KAP;
+  #display max {r in Regions, i in Sectors} DUAL_KAP[r, i, s];
+  #display min {r in Regions, i in Sectors} DUAL_KAP[r, i, s];
+  for {i in Sectors} {
+  #-----------save actual path values of market clearing to parameter
+    let MKT_CLR[i, s] := sum{rr in Regions}(
+      DOM[rr, i, s] 
+      - CON[rr, i, s]
+      - INV_CSUM[rr, i, s] 
+      - MED_CSUM[rr, i, s]
+      - ADJ_COST_KAP[rr, i, s]
+      );
+    let DUAL_MKT_CLR[i, s] := market_clearing[i, LInf];
+  };
+  #-----------growth rate of capital as a parameter
+  for {r in Regions, i in Sectors}{
+    let GROWTH_KAP[r, i, s] := (KAP[r, i, s + 1] - KAP[r, i, s]) / KAP[r, i, s];
+    if s > PInf then 
+    let GROWTH_OUT[r, i, s] :=
+      (E_OUT[r, i, s] - E_OUT[r, i, s - 1]) / E_OUT[r, i, s - 1];
+  #-----------Euler integrand for Cobb--Douglas production
+    #let EULER_INTEGRAND[r, i, s] :=  DUAL_KAP[r, i, s] * (1 - DELTA[i]) 
+    #  + DUAL_MKT_CLR[i, s] * (
+    #    SHR_KAP_OUT[i] * (KAP[r, i, s] / LAB[r, i, s]) ** (SHR_KAP_OUT[i] - 1)
+    #    - PHI_ADJ[i] * (2 * GROWTH_KAP[r, i, s] + GROWTH_KAP[r, i, s] ** 2)
+    #  );
+  #-----------Euler integrand for CES production
+    let EULER_INTEGRAND[r, i, s] := DUAL_KAP[r, i, s] * (1 - DELTA[i]) 
+      + DUAL_MKT_CLR[i, s] * (
+        SHR_KAP_OUT_CES[r, i] * KAP[r, i, s] ** (RHO_OUT[i] - 1)
+          * SCALE_OUT * A[i] * SHR_DOM[r, i, s]
+            * (DOM[r, i, s] / (A[i] * SHR_DOM[r, i, s]))
+              ** (1 - RHO_OUT[i] / SCALE_OUT)
+        - PHI_ADJ[i] * (2 * GROWTH_KAP[r, i, s] + GROWTH_KAP[r, i, s] ** 2)
+      );
+    if s > PInf then 
+    let EULER_RATIO[r, i, s] 
+        := BETA * EULER_INTEGRAND[r, i, s] / DUAL_KAP[r, i, s - 1];
+  };
+  #-----------change output directory for shocks
+  if shock = "shock" then let outputdir := shockoutputdir;
+  write table res;
+  write table aggres;
+  write table prcres;
+  if shock = "" then write table prdeps;
+  #-----------return to default output directory
+  let outputdir := (experimentdir & "output-calhistnoshock/");
+  display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
+    min{r in Regions, i in Sectors} E_OUT[r, i, s],
+    max{r in Regions, i in Sectors} E_OUT[r, i, s],
+    min{r in Regions, i in Sectors} CON[r, i, s],
+    max{r in Regions, i in Sectors} CON[r, i, s],
+    min{r in Regions, i in Sectors} INV_CSUM[r, i, s],
+    max{r in Regions, i in Sectors} INV_CSUM[r, i, s],
+    min{r in Regions, i in Sectors} MED_CSUM[r, i, s],
+    max{r in Regions, i in Sectors} MED_CSUM[r, i, s],
+    max{r in Regions, i in Sectors} ADJ_COST_KAP[r, i, s],
+    max{i in Sectors} abs(MKT_CLR[i, s]),
+    min{i in Sectors} DUAL_MKT_CLR[i, s],
+    max{i in Sectors} DUAL_MKT_CLR[i, s],
+    min{r in Regions, i in Sectors} LAB[r, i, s],
+    max{r in Regions, i in Sectors} LAB[r, i, s],
+    min{r in Regions, i in Sectors} KAP[r, i, s + 1],
+    max{r in Regions, i in Sectors} KAP[r, i, s + 1],
+    min{r in Regions, i in Sectors} GROWTH_KAP[r, i, s],
+    max{r in Regions, i in Sectors} GROWTH_KAP[r, i, s],
+    min{r in Regions, i in Sectors} DUAL_KAP[r, i, s],
+    min{r in Regions, i in Sectors} XPO[r, i, s],
+    max{r in Regions, i in Sectors} XPO[r, i, s],
+    utility, tail_val, pres_disc_val[s],
+    (sum{r in Regions, i in Sectors} con[r, i, LInf])
+      / (sum{r in Regions, i in Sectors} E_out[r, i, LInf]),
+    KAP['GLD', 'O', s] / E_OUT['GLD', 'O', s],
+    max{r in Regions, i in Sectors, j in Sectors, ii in Sectors}
+      abs(JAC_ID[r, i, j, ii, s]),
+    max{r in Regions} MAX_DIFF_PROP_OUT[r, s],
+    s, _ampl_elapsed_time, _total_solve_time, ctime();
+  # for {r in Regions, i in Sectors}{
+  # if s > PInf then display EULER_RATIO[r, i, s] - EULER_RATIO[r, i, s - 1];
+  # };
+};

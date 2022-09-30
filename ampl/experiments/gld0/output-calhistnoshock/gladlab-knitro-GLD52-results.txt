@@ -1,0 +1,7 @@
+s = 52
+ctime() = 'Fri Sep 30 21:35:36 2022'
+_ampl_elapsed_time = 61.0099
+_total_solve_time = 443.161
+_total_solve_system_time = 6.25864
+_total_solve_user_time = 436.903
+

@@ -32,7 +32,7 @@ tablediffname = "austablediffrr"
 #tablediffname = "soldiff"
 
 tablekapname = "auskapflw8"
-tablelabname = "labsecreg"
+tablelabname = "labsecregabs"
 tablepopname = "popreg"
 tableoutname = "outperdiv"
 #tbl8 = "tbl8"
