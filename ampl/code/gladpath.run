@@ -6,7 +6,7 @@ let LSup := 10;
 #=============================================================================#
 #-----------EDIT THIS SECTION-------------------------------------------------#
 #-----------the name of the experiment
-let experimentname := "sol";
+let experimentname := "gld1";
 #-----------for generating a history set shock := "" otherwise ...
 let shock := "";
 let shock := "shock";
@@ -19,7 +19,7 @@ let shock := "shock";
 #-----------which solver are we using? Comment out to use the default: knitro.
 #let solvername := "conopt";
 #option solver conopt;
-let reg := "aus";
+let reg := "gld";
 let filename := ("gladlab-" & solvername & "-" & reg);
 #=============================================================================#
 #-----------setup for output of results (should be no need to edit)
@@ -40,8 +40,9 @@ option show_stats 1;
 #=============================================================================#
 data;
 #-----------1xANZdiv model
-set Regions := GLD;
-set Sectors := A B C D E F G H I J K L M N O P Q R S;
+let Regions := {"GLD"};
+let Sectors := {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
+  "M", "N", "O", "P", "Q", "R", "S"};
 read table rif;
 read table rmf;
 read table rdcm;
@@ -121,21 +122,21 @@ for {i in Sectors}{
   let EPS_CMED['GLD', i, j] := 10e-2;
   };
 };
-let A['E'] := 120e-2 * A['E'];
+#let A['E'] := 120e-2 * A['E'];
 #let A['P'] := 120e-2 * A['P'];
 #let A['C'] := 110e-2 * A['C'];
 #let A['M'] := 130e-2 * A'M'];
 #let A['D'] := 070e-2 * A['D'];
 #let A['L'] := 070e-2 * A['L'];
 #let A['K'] := 070e-2 * A['K'];
-#let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
-#let RAW_MED_FLW['GLD', 'B', 'C'] := RAW_MED_FLW['GLD', 'B', 'C'] * 200e-2;
-#let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 150e-2;
-#let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
-#let RAW_YPO_CMED['GLD', 'B', 'C']
-#  := RAW_YPO_CMED['GLD', 'B', 'C'] * 500e-2;
+let RAW_XPO_JOUT['GLD', 'C'] := RAW_DOM_JOUT['GLD', 'C'] * 3; 
+let RAW_MED_FLW['GLD', 'B', 'C'] := RAW_MED_FLW['GLD', 'B', 'C'] * 200e-2;
+let RAW_MED_FLW['GLD', 'C', 'C'] := RAW_MED_FLW['GLD', 'C', 'C'] * 150e-2;
+let RAW_MED_FLW['GLD', 'D', 'C'] := RAW_MED_FLW['GLD', 'D', 'C'] * 700e-2;
+let RAW_YPO_CMED['GLD', 'B', 'C']
+  := RAW_YPO_CMED['GLD', 'B', 'C'] * 500e-2;
 ## finally, the subsidy
-#let RAW_KAP_OUT['GLD', 'C'] := RAW_KAP_OUT['GLD', 'C'] + 174000; 
+let RAW_KAP_OUT['GLD', 'C'] := RAW_KAP_OUT['GLD', 'C'] + 174000; 
 display A;
 #let A['B'] := 50e-2;
 #let KAP['GLD', 'B', 0] := 200e-2;
@@ -175,7 +176,8 @@ for {s in PathTimes}{
   objective pres_disc_val[s];
   #-----------update initial kapital (CJ simulation step)
   for {r in Regions, i in Sectors} {
-    fix kap[r, i, LInf] := INIT_KAP[r, i];
+    if s = PInf then let KAP[r, i, s] := INIT_KAP[r, i];
+    fix kap[r, i, LInf] := KAP[r, i, s];
   };
   let ALPHA := ALPHA_0 ** s;
   #-----------RAS and calibration
@@ -246,18 +248,18 @@ for {s in PathTimes}{
     if shock = "shock" then {
       display s;
       let instancename := (shockoutputdir & filename & s);
-      #  if s = shocktime then {
-      #    let A['C'] := A['C'] * 080e-2;
-      #    let RAW_XPO_JOUT['GLD', 'C']
-      #      := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
-      #    let RAW_MED_FLW['GLD', 'B', 'C']
-      #      := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
-      #    let RAW_MED_FLW['GLD', 'C', 'C']
-      #      := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
-      #    let RAW_MED_FLW['GLD', 'D', 'C']
-      #      := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
-      #    let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
-      #  };
+        if s = shocktime then {
+          let A['C'] := A['C'] * 080e-2;
+          let RAW_XPO_JOUT['GLD', 'C']
+            := RAW_XPO_JOUT['GLD', 'C'] * 3 / 4; 
+          let RAW_MED_FLW['GLD', 'B', 'C']
+            := RAW_MED_FLW['GLD', 'B', 'C'] * 090e-2;
+          let RAW_MED_FLW['GLD', 'C', 'C']
+            := RAW_MED_FLW['GLD', 'C', 'C'] * 040e-2;
+          let RAW_MED_FLW['GLD', 'D', 'C']
+            := RAW_MED_FLW['GLD', 'D', 'C'] * 15e-2;
+          let KAP['GLD', 'C', s] := KAP['GLD', 'C', s] * 3 / 4;
+        };
       #-------write out an nl file this means that a sol file is also generated
       write ("b" & instancename);
       #-------actually solve
@@ -352,12 +354,15 @@ for {s in PathTimes}{
     let EULER_RATIO[r, i, s] 
         := BETA * EULER_INTEGRAND[r, i, s] / DUAL_KAP[r, i, s - 1];
   };
+  #-----------change output directory for shocks
   if shock = "shock" then let outputdir := shockoutputdir;
   write table res;
   write table aggres;
   write table prcres;
   write table initkap[s];
   if shock = "" then write table prdeps;
+  #-----------return to default output directory
+  let outputdir := (experimentdir & "output-calhistnoshock/");
   display GROWTH_KAP, GROWTH_OUT, EULER_INTEGRAND, EULER_RATIO,
     min{r in Regions, i in Sectors} E_OUT[r, i, s],
     max{r in Regions, i in Sectors} E_OUT[r, i, s],

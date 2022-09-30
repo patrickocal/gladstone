@@ -192,11 +192,11 @@ T5[:, "T6"] -= T5[:, "Q7"];
 outtocsv("RAW_DOM_JOUT", prepsubframe(T5, sectorcodes, ["T6"]));
 
 # reference REF_LAB
-outtocsv("REF_LAB", prepsubframe(tbllab, sectorcodes, refreg));
+outtocsv("REF_LAB", prepsubframe(tbllab, sectorcodes, reg));
 # regional REG_LAB
 outtocsv("REG_LAB", prepsubframe(tbllab, sectorcodes, region));
 # regional AUS_POP
-#outtocsv("AUS_POP", prepsubframe(tblpop, sectorcodes, refreg));
+#outtocsv("AUS_POP", prepsubframe(tblpop, sectorcodes, reg));
 # regional REG_POP
 #outtocsv("REG_POP", prepsubframe(tblpop, sectorcodes, region[1]));
 # RAW_DOM_CINV 
@@ -223,6 +223,6 @@ outtocsv("SHR_MED_COL", prepsubframe(colshr, sectorcodes, sectorcodes));
 
 
 # RAW_REG_OUT: output per region and division
-outtocsv("RAW_REG_OUT", prepsubframe(tbloutperdiv, sectorcodes, refreg)); 
+outtocsv("RAW_REG_OUT", prepsubframe(tbloutperdiv, sectorcodes, reg)); 
 
 println("done saving to julia/output/*.csv")

@@ -68,3 +68,24 @@ _total_solve_time = 27.332
 _total_solve_system_time = 0.341426
 _total_solve_user_time = 26.9906
 
+s = 9
+ctime() = 'Fri Sep 30 09:38:28 2022'
+_ampl_elapsed_time = 27.629
+_total_solve_time = 27.7971
+_total_solve_system_time = 0.322757
+_total_solve_user_time = 27.4744
+
+s = 9
+ctime() = 'Fri Sep 30 09:50:53 2022'
+_ampl_elapsed_time = 88.5902
+_total_solve_time = 38.0168
+_total_solve_system_time = 0.403457
+_total_solve_user_time = 37.6133
+
+s = 9
+ctime() = 'Fri Sep 30 09:54:37 2022'
+_ampl_elapsed_time = 0.713379
+_total_solve_time = 38.6691
+_total_solve_system_time = 0.433988
+_total_solve_user_time = 38.2351
+
