@@ -858,25 +858,28 @@ subject to vertical_balance
 #=============================================================================#
 # parameters for directories and files
 #=============================================================================#
-param experimentname symbolic;
-param shock symbolic;
+param experimentname symbolic default "give experiment a name and create dir";
+param shock symbolic default "";
+param toggle_sol symbolic default "solve";
 param instancename symbolic;
-param filename symbolic;
 param solvername symbolic default "knitro";
 param experiment symbolic; # deprecated
 param reg symbolic default "aus";
-param toggle_sol symbolic default "solve";
 param shocktime integer default round(PSup * 2 / 3);
 param caltime integer default round(PSup / 3);
 param INIT_KAP "initial kapital unindexed by time: for shocks"
   {Regions, Sectors} default 1;
+param parentfilename symbolic = ("gladlab-" & experimentname & "-" & reg & "-");
+param shockfilename symbolic = (parentfilename & shock);
+param filename symbolic default shockfilename;
 #-----------directories
-param experimentdir symbolic
-  default ("./ampl/experiments/" & experimentname & "/");
-param datadir symbolic default (experimentdir & "data/"); 
-param shockdatadir symbolic default (experimentdir & "output-calhistnoshock/");
-param outputdir symbolic default (experimentdir & "output-calhistnoshock/");
-param shockoutputdir symbolic default( experimentdir & shock & "/output/");
+param experimentdir symbolic = ("./ampl/experiments/" & experimentname & "/");
+param datadir symbolic = (experimentdir & "data/"); 
+param shockdatadir symbolic = (experimentdir & "output/");
+param parentoutputdir symbolic = (experimentdir & "output/");
+param shockoutputdir symbolic = (experimentdir & shock & "/output/");
+#-----------output directory as a variable (for tables IN and OUT)
+param outputdir symbolic default shockoutputdir;
 #=============================================================================#
 # correspondances for data tables
 #=============================================================================#
@@ -932,7 +935,7 @@ param shockoutputdir symbolic default( experimentdir & shock & "/output/");
     GROWTH_KAP, GROWTH_OUT,
     LAB, CMED_SEC,
     MPKK, MPLL, MPMM,
-    EULER_INTEGRAND, EULER_RATIO;
+    EULER_INTEGRAND, EULER_RATIO, DIFF_PROP_OUT;
   table aggres OUT "amplxl"
     (outputdir & filename & "-agg" & ".xlsx") "Results":
     [Regions, PathTimes],
