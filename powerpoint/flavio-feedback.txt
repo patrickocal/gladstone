@@ -1,0 +1,25 @@
+Comments in no particular order:
+
+ 
+
+    Slides have the ‘right’ balance between providing relevant background and results (well done!) and the length/tone of the presentation is spot on. However, need to give some sense of the economic significance of aluminium production for the QLD economy (share of GSP, employment?,)….also they consume a lot of water and supply is limited to the Awoonga Dam. 
+
+ 
+
+    You will need to reference the QLD Energy Plan (e.g., in slides 3 and 5 and in the conclusion) – it will have a direct impact on Gladstone and will likely change the economics of producing aluminium – so you need to emphasise that you are looking at the transition and that perhaps the future of aluminium production looks bright?
+
+ 
+
+    Key takeaways: I would emphasise that the results (both with the Euler and non-Euler holding suggest a negative (even in the Non-Euler case, output only gets back to the pre-shock level) impact of closure – and given that the future of aluminium production seems bright, need to look closely at support during the transition. I would actually delete the last dot point as it is somewhat straightforward. 
+
+ 
+
+    I think the audience will need help to understand what you mean by ‘expected value across all states of the world’ and what it means for the Euler eqns to hold or not – and what is that the CoPS model is missing out by not imposing this ‘equilibrium’ condition. I am not so sure about the interpretation in the fourth dot point in slide 7 (the sub dot point seems right). 
+
+ 
+
+    Slide 10, incidence of the subsidy: I am not sure if I follow this. If the demand for aluminium is perfectly elastic (perfect competition), then the subsidy has no impact on prices, and its captured by the manufacturer (not the exports). But maybe you mean something else – that the subsidy only applies to the amount exported? But then, why is this relevant if my comment about the incidence of the subsidy is right. 
+
+ 
+
+    I wonder whether in addition to %, you could present some of the results in $
