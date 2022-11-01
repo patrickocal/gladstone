@@ -31,7 +31,7 @@
 %\usepackage{tex/preamble-files/paper-preamble}
 
 \title{\textsc{The Boyne Island smelter:\\
-  an impact study}}
+  a case study}}
 \author{\small Patrick O’Callaghan and John Mangan}
 \renewcommand\thefigure{(\roman{figure})}
 \begin{document}
@@ -40,35 +40,19 @@
 
 %\section*{\centering Draft}
 
-\paragraph{Outline} Australia is one of only three energy abundant countries in
-the world with a fully integrated supply chain for producing raw aluminium
-(\cite{GN-Aluminium-smelters}). The In particular, Bauxite from Weipa, North
-Queensland, is refined and smelted in Gladstone, Central Queensland.
-
-Aluminium smelting is a highly energy intensive process with Boyne Smelter
-Limited (BSL) in Gladstone consuming approximately one eighth of the total
-electricity supply of Queensland over the course of a typical year. Like other
-regions that produce aluminium, Central Queensland is energy-abundant with an
-active coal-mining and natural-gas industry. The smelter is supported by the
-coal-fired Gladstone Power Station (GPS). GPS is one of four in the Central
-Queensland region. GPS has the capacity to supply one quarter of Queenland's
-annual electricity demand. GPS is unique in that it carries a variable load
-with the ability to rapidly increase the supply of power in the case of an
-extended blackout that would otherwise lead to aluminium freezing the pipes and
-costly damages to BSL.
-
+\paragraph{Outline}
 In this paper, we apply recent methods that we have developed as part of an
 exercise to build the next generation of Computational General Equilibrium
 (CGE) models.  We build on recent work from the computational economics
 literature (\cite{CJ} and \cite{Atalay}).
 
 In particular, we study the economic impact of a permanent closure of the
-smelter on the Gladstone region. The key local variables of interest are
-capital, output, consumption as well as gross value added and employment which
-we model across sectors and over time. We model the broader gladstone region
-and estimate the impact on the broader supply chain via imports and exports. We
-present results for the standard 19 ANZSIC divisions and for the economy on
-aggregate.
+smelter on the Gladstone LGA/SA3 region of Queensland, Australia. The key local
+variables of interest are capital, output, consumption as well as gross value
+added and employment which we model across sectors and over time. We model the
+broader gladstone region and estimate the impact on the broader supply chain
+via imports and exports. We present results for the standard 19 ANZSIC
+divisions and for the economy on aggregate.
 
 Our main insight is that the impact of the shock depends on whether or not the
 Sector-specific Euler Equations (SEE) hold. Recall that the celebrated Euler
@@ -97,39 +81,46 @@ form the SEE.
 
 \end{itemize}
 
-To our knowledge these implications of the SEE are novel to the literature.  In
-fact, for the most part, Euler equations are entirely absent from the CGE
-lieterature.  A notable exception is \cite{Dixon_Rimmer-Euler} policy functions
+To our knowledge, these implications of the SEE are novel to the literature.
+In fact, for the most part, Euler equations are entirely absent from the CGE
+lieterature.  A recent exception is \cite{Dixon_Rimmer-Euler} policy functions
 that, under restrictive conditions, are equivalent to the SEE are derived.
 This gap in the literature follows from the fact that CGE models tend to
 specialise in the cross section whereas macroeconomic (dynamic stochastic
-general equilibrium (DSGE) models tend to specialise on the dynamics.
-As \cite{Dixon_Rimmer-Euler} point out, in a standard CGE model, current
-consumption does not take into account all information about the future.
+general equilibrium (DSGE)) models tend to specialise on the dynamics.  As
+\cite{Dixon_Rimmer-Euler} point out, in a standard CGE model, current
+consumption policies do not take into account all information about the future.
 
 In this paper, by looking at what the implications are when the SEE fail to
-hold, we are going one step further. A step that is natural given the long
-history in behavioural economics of exploring what happens when agents are not
+hold, we are going one step further. This step is motivated by the long history
+in behavioural economics of exploring what happens when agents are not
 perfectly rational in how they process information under uncertainty.  This
 step is even more natural and relevant in settings with significant uncertainty
-and rapid change.  These settings are precisely where the canonical expected
-utility maximisation are most likely to fail: settings where good decisions are
-difficult to make.
+and rapid change. In such settings, the right decision is difficult to make.
 
-Yet the world we find ourselves is precisely one where we face significant
-uncertainty and the need for rapid change. Change that will enable us to
-achieve net-zero carbon emissions by 2050. It is in this setting that we
+Present-day policy makers find themselves in a world with significant
+uncertainty and where rapid change is necessary, if they are to implement a
+policy of net-zero carbon emissions by 2050. Capital, from the cars we drive,
+to the electricity grid we operate, to the factories with which produce steel
+will undergo significant transformations. Together these transformations
+present new challenges of how to allocate capital across sectors.
+
+It is in this setting that we
 examine the closure of the Boyne Island Smelter.
 
+Australia is one of only three energy abundant countries in
+the world with a fully integrated supply chain for producing raw aluminium
+(\cite{GN-Aluminium-smelters}). The In particular, Bauxite from Weipa, North
+Queensland, is refined and smelted in Gladstone, Central Queensland.
 
-on the dyndynamic or
-"recursive" CGE models tend to avoid full intertemporal optimisation. Moreover
-macroeconomic models that do focus on intersectorsal activity and intermediate
-production (such as \cite{Atalay}) tend to study log-linear approximations
-around the steady state  going back to \cite{Long and Plosser}) tend
-allocations across time are not o not feature as intertemporal optimality is
-Aggregate Euler Equations have of course been extensively studied in the
-macroeconomics and finance literature. Moreover
+Aluminium smelting is a highly energy intensive process with Boyne Smelter
+Limited (BSL) in Gladstone consuming approximately one eighth of the total
+electricity supply of Queensland over the course of a typical year. Like other
+regions that produce aluminium, Central Queensland is energy-abundant with an
+active coal-mining and natural-gas industry. The smelter is supported by the
+coal-fired Gladstone Power Station (GPS): one of four in the Central
+Queensland region. GPS has the capacity to supply one quarter of Queenland's
+annual electricity demand.
 
 \paragraph{Summary of results} The sectors where there is an impact of
 substance are Agriculture, Mining, Manufacturing and Utilities. These are
